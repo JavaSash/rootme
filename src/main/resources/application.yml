@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: rootme
+  jpa:
+    hibernate:
+      ddl-auto: validate
+      show-sql: false
+      database-platform: org.hibernate.dialect.PostgreSQLDialect
+  datasource:
+    url:
+    username:
+    password:
