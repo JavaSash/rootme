@@ -1,7 +1,7 @@
 package ru.stepenko.rootme.repository
 
 import org.springframework.data.jpa.repository.JpaRepository
-import ru.stepenko.rootme.model.Tree
+import ru.stepenko.rootme.model.entity.Tree
 
 interface TreeRepository: JpaRepository<Tree, String> {
 
