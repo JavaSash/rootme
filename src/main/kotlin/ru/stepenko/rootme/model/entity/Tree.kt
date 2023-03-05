@@ -10,5 +10,5 @@ data class Tree(
     @Column
     val uuid: String,
     @Column
-    val profileUuid: String
+    val profileId: String
 )

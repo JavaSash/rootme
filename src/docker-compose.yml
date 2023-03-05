@@ -1,0 +1,11 @@
+version: "3.9"
+services:
+  postgres:
+    container_name: psql
+    image: postgres:13.3
+    environment:
+      POSTGRES_DB: "rootme_db"
+      POSTGRES_USER: "rootme_adm"
+      POSTGRES_PASSWORD: "12345"
+    ports:
+      - "5432:5432"

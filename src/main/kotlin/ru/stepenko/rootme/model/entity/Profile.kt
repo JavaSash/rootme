@@ -11,7 +11,7 @@ data class Profile(
     val username: String,
     @Column
     val password: String,
-    @OneToMany
-    @JoinColumn(name="treeUuids")
-    val treeUuids: MutableList<String>
+//    @OneToMany
+//    @JoinColumn(name="treeUuids")
+//    val treeUuids: MutableList<String>
 )

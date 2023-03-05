@@ -3,10 +3,11 @@ spring:
     name: rootme
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
       show-sql: false
       database-platform: org.hibernate.dialect.PostgreSQLDialect
   datasource:
-    url:
-    username:
-    password:
+    driverClassName: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/rootme_db
+    username: rootme_adm
+    password: 12345

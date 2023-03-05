@@ -1,7 +1,6 @@
 package ru.stepenko.rootme.model.entity
 
 import jakarta.persistence.*
-import ru.stepenko.rootme.model.BirthPlace
 import ru.stepenko.rootme.model.Gender
 import ru.stepenko.rootme.model.RelatedRelationship
 import java.time.LocalDate
@@ -34,7 +33,7 @@ data class Person(
 // оно будет меняться в процессе работы с деревом и в бд не нужно, только в рантайме
     @Column
     var isRoot: Boolean,
-    @OneToOne
-    @JoinColumn(name="treeUuid")
-    val treeUuid: String
+//    @OneToOne
+//    @JoinColumn(name="treeUuid")
+//    val treeUuid: String
 )
