@@ -5,7 +5,7 @@ import org.springframework.stereotype.Service
 import ru.stepenko.rootme.model.entity.Person
 
 @Service
-class PersonService(private val personRepository: JpaRepository<Person, String>) {
+class PersonService(private val personRepository: JpaRepository<Person, Int>) {
 
     fun create(person: Person): Person = personRepository.save(person)
 
@@ -16,7 +16,7 @@ class PersonService(private val personRepository: JpaRepository<Person, String>)
         return personRepository.save(person)
     }
 
-    fun getPerson(personId: String): Person = personRepository.getReferenceById(personId)
+    fun getPerson(personId: Int): Person = personRepository.getReferenceById(personId)
 
-    fun delete(personId: String) = personRepository.deleteById(personId)
+    fun delete(personId: Int) = personRepository.deleteById(personId)
 }

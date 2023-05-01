@@ -1,15 +1,19 @@
 package ru.stepenko.rootme.model.entity
 
+import com.fasterxml.jackson.databind.PropertyNamingStrategies
+import com.fasterxml.jackson.databind.annotation.JsonNaming
 import jakarta.persistence.*
 import ru.stepenko.rootme.model.Gender
 import ru.stepenko.rootme.model.RelatedRelationship
 import java.time.LocalDate
 
 @Entity(name = "persons")
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 data class Person(
     @Id
+    @GeneratedValue(strategy=GenerationType.AUTO)
     @Column
-    val uuid: String,
+    val id: Int,
     @Column
     val firstName: String,
     @Column
@@ -19,7 +23,7 @@ data class Person(
     @Column
     val gender: Gender,
     @Column
-    val birthDate: LocalDate,
+    val birthDate: LocalDate?,
 //    TODO интеграция с сервисом геолокации с автоподстановкой
     @Column
     val birthCountry: String?,
@@ -27,12 +31,13 @@ data class Person(
     val birthRegion: String?,
     @Column
     val birthCity: String?,
+//    TODO обязательный, если не корневая личность (isRoot = false)
     @Column
-    val relatedRelationship: RelatedRelationship,
+    val relatedRelationship: RelatedRelationship?,
 //TODO скорей всего придётся делать прослойку из ДАО и туда выносить это поле,
 // оно будет меняться в процессе работы с деревом и в бд не нужно, только в рантайме
     @Column
-    var isRoot: Boolean,
+    var isRoot: Boolean = false,
 //    @OneToOne
 //    @JoinColumn(name="treeUuid")
 //    val treeUuid: String

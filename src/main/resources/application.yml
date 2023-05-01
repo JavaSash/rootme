@@ -6,6 +6,7 @@ spring:
       ddl-auto: update
       show-sql: false
       database-platform: org.hibernate.dialect.PostgreSQLDialect
+
   datasource:
     driverClassName: org.postgresql.Driver
     url: jdbc:postgresql://localhost:5432/rootme_db

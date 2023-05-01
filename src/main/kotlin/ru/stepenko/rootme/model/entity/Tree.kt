@@ -1,14 +1,13 @@
-package ru.stepenko.rootme.model.entity
-
-import jakarta.persistence.Column
-import jakarta.persistence.Entity
-import jakarta.persistence.Id
-
-@Entity(name = "trees")
-data class Tree(
-    @Id
-    @Column
-    val uuid: String,
-    @Column
-    val profileId: String
-)
+//package ru.stepenko.rootme.model.entity
+//
+//import jakarta.persistence.*
+//
+//@Entity(name = "trees")
+//data class Tree(
+//    @Id
+//    @GeneratedValue(strategy= GenerationType.AUTO)
+//    @Column
+//    val id: Int,
+//    @Column
+//    val profileId: String
+//)

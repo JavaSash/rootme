@@ -23,6 +23,11 @@ dependencies {
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 	implementation("org.postgresql:postgresql:42.3.1")
+	implementation("org.springframework.boot:spring-boot-starter-thymeleaf:3.0.4")
+//	Logging
+	implementation("io.github.microutils:kotlin-logging-jvm:3.0.4")
+	testImplementation("ch.qos.logback:logback-classic:1.4.4")
+
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
 
