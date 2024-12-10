@@ -3,15 +3,15 @@
 //import org.springframework.web.bind.annotation.RestController
 //import ru.stepenko.rootme.model.entity.Profile
 //import ru.stepenko.rootme.service.ProfileService
-//
+// todo impl
 //@RestController
-//class ProfileController(private val profileService: ProfileService) {
+//class ProfileApi(private val profileService: ProfileService) {
 //
 //    fun create(profile: Profile): Profile = profileService.create(profile)
 //
 //    fun update(profile: Profile): Profile = profileService.update(profile)
 //
-//    fun getProfile(profileId: Int): Profile = profileService.getProfile(profileId)
+//    fun getProfile(profileId: String): Profile = profileService.getProfile(profileId)
 //
-//    fun delete(ProfileId: Int) = profileService.delete(ProfileId)
+//    fun delete(ProfileId: String) = profileService.delete(ProfileId)
 //}

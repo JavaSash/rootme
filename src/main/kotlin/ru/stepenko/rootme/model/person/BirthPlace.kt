@@ -1,4 +1,4 @@
-package ru.stepenko.rootme.model
+package ru.stepenko.rootme.model.person
 
 data class BirthPlace(
     private var country: String?,

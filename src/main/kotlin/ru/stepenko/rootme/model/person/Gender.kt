@@ -1,4 +1,4 @@
-package ru.stepenko.rootme.model
+package ru.stepenko.rootme.model.person
 
 enum class Gender(val designation: String) {
 

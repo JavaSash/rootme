@@ -1,0 +1,31 @@
+version: "3.9"
+services:
+  postgres:
+    container_name: psql
+    image: postgres:13.3
+    environment:
+      POSTGRES_DB: "rootme_db"
+      POSTGRES_USER: "rootme_adm"
+      POSTGRES_PASSWORD: "12345"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  app:
+    container_name: rootme
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      SPRING_DATASOURCE_URL: "jdbc:postgresql://psql:5432/rootme_db"
+      SPRING_DATASOURCE_USERNAME: "rootme_adm"
+      SPRING_DATASOURCE_PASSWORD: "12345"
+      SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
+    depends_on:
+      - postgres
+    ports:
+      - "8080:8080"
+
+volumes:
+  postgres_data:
