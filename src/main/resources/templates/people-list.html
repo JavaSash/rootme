@@ -15,9 +15,42 @@
                         const peopleList = response.data;
                         let html = '';
                         peopleList.forEach(person => {
-                            html += `<p>${person.firstName} ${person.lastName}</p>`;
+                            html += `
+                                <div class="person-card">
+                                    <h3>${person.firstName} ${person.patronymic || ''} ${person.lastName}</h3>
+                                    <p>Пол: ${person.gender === 'MALE' ? 'Мужской' : 'Женский'}</p>
+                                    <p>Дата рождения: ${person.birthDate || ''}</p>
+                                    <p>Страна рождения: ${person.birthCountry || ''}</p>
+                                    <p>Регион рождения: ${person.birthRegion || ''}</p>
+                                    <p>Город рождения: ${person.birthCity || ''}</p>
+                                    <div class="actions">
+                                        <a href="/create-person" class="add-family-member">Add</a>
+                                        <a href="/edit-person">Edit</a>
+                                        <a href="/api/v1/person/delete/${person.id}" class="delete">Delete</a>
+                                    </div>
+                                </div>
+                            `;
                         });
                         $('#peopleList').html(html);
+
+                        // Удаление члена семьи
+                        $('.delete').on('click', function (e) {
+                            e.preventDefault();
+                            const deleteUrl = $(this).attr('href');
+                            $.ajax({
+                                url: deleteUrl,
+                                type: 'DELETE',
+                                success: function (response) {
+                                    if (response.message) {
+                                        alert(response.message);
+                                        window.location.href = '/'; // Перенаправление на главную страницу
+                                    }
+                                },
+                                error: function (xhr, status, error) {
+                                    alert('Ошибка удаления: ' + xhr.responseText);
+                                }
+                            });
+                        });
                     }
                 },
                 error: function (xhr, status, error) {
@@ -53,26 +86,29 @@
     .menu a:hover {
         background-color: #0056b3;
     }
-    .btn-back {
-        display: inline-block;
-        margin-top: 20px;
+    .person-card {
         padding: 10px;
-        background-color: #6c757d;
-        color: white;
+        border: 1px solid #ccc;
         border-radius: 5px;
-        text-decoration: none;
-        transition: background-color 0.3s;
+        background-color: #f9f9f9;
+        box-sizing: border-box;
+        text-align: left;
+        max-width: 300px; /* Ограничение ширины карточки */
+        margin: 0 auto 10px; /* Центрирование и отступы снизу */
+        position: relative; /* Для корректного позиционирования иконок */
     }
-    .btn-back:hover {
-        background-color: #5a6268;
+    .actions {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+    }
+    .actions a {
+        margin-left: 10px;
     }
 </style>
 <div id="peopleList">
     <!-- Данные людей будут отображены здесь -->
 </div>
-
-<!-- Кнопка "Назад" -->
-<a href="/" class="btn-back">Назад</a>
 
 </body>
 </html>

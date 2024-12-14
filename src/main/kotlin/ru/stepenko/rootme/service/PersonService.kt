@@ -47,13 +47,14 @@ class PersonService(private val personRepository: PersonRepository) {
             data = personRepository.deleteById(personId)
         ) }.getOrElse { throw PersonNotFoundException("Person with id=$personId not found") }
 
-    private fun getPersonOrThrowExc(personId: UUID) = personRepository.findById(personId)
-        .orElseThrow { throw PersonNotFoundException("Person with id=$personId not found") }
-
     fun getAllPersons(): ResponseWrapper =
         formResponseWrapper(
             msg = CrudStatus.FOUND.name,
             data = personRepository.findAll()
         )
 
+    fun isNewTree() = personRepository.findAll().isEmpty()
+
+    private fun getPersonOrThrowExc(personId: UUID) = personRepository.findById(personId)
+        .orElseThrow { throw PersonNotFoundException("Person with id=$personId not found") }
 }

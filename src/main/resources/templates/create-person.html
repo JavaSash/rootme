@@ -31,7 +31,8 @@
                             alert(response.message);
                         }
                         console.log('Created person:', response.data);
-                        // Redirect to another page or display success message
+                        // Redirect to the people list page
+                        window.location.href = '/people-list';
                     },
                     error: function (xhr, status, error) {
                         alert('Ошибка создания персоны: ' + xhr.responseText);
@@ -67,19 +68,7 @@
     .menu a:hover {
         background-color: #0056b3;
     }
-    .btn-back {
-        display: inline-block;
-        margin-top: 20px;
-        padding: 10px;
-        background-color: #6c757d;
-        color: white;
-        border-radius: 5px;
-        text-decoration: none;
-        transition: background-color 0.3s;
-    }
-    .btn-back:hover {
-        background-color: #5a6268;
-    }
+
 </style>
 <form id="createPersonForm">
     <label for="firstName">Имя:</label>
@@ -111,9 +100,6 @@
 
     <button type="submit">Создать</button>
 </form>
-
-<!-- Кнопка "Назад" -->
-<a href="/" class="btn-back">Назад</a>
 
 </body>
 </html>

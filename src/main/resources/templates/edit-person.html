@@ -7,6 +7,33 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         $(document).ready(function () {
+            // Автозаполнение формы данными из карточки
+            const urlParams = new URLSearchParams(window.location.search);
+            const personId = urlParams.get('id');
+            if (personId) {
+                $('#personId').val(personId);
+                $.ajax({
+                    url: `/api/v1/person/${personId}`,
+                    type: 'GET',
+                    success: function (response) {
+                        if (response.data) {
+                            $('#firstName').val(response.data.firstName);
+                            $('#lastName').val(response.data.lastName);
+                            $('#patronymic').val(response.data.patronymic);
+                            $('#gender').val(response.data.gender);
+                            $('#birthDate').val(response.data.birthDate);
+                            $('#birthCountry').val(response.data.birthCountry);
+                            $('#birthRegion').val(response.data.birthRegion);
+                            $('#birthCity').val(response.data.birthCity);
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        alert('Ошибка загрузки данных персоны: ' + xhr.responseText);
+                    }
+                });
+            }
+
+            // Обработка формы редактирования
             $('#editPersonForm').on('submit', function (e) {
                 e.preventDefault();
 
@@ -23,16 +50,15 @@
                 };
 
                 $.ajax({
-                    url: '/api/v1/person/edit',
+                    url: `/api/v1/person/edit/${personData.id}`,
                     type: 'PUT',
                     contentType: 'application/json',
                     data: JSON.stringify(personData),
                     success: function (response) {
                         if (response.message) {
                             alert(response.message);
+                            window.location.href = '/'; // Перенаправление на главную страницу
                         }
-                        console.log('Updated person:', response.data);
-                        // Redirect to another page or display success message
                     },
                     error: function (xhr, status, error) {
                         alert('Ошибка редактирования персоны: ' + xhr.responseText);
@@ -68,19 +94,6 @@
     .menu a:hover {
         background-color: #0056b3;
     }
-    .btn-back {
-        display: inline-block;
-        margin-top: 20px;
-        padding: 10px;
-        background-color: #6c757d;
-        color: white;
-        border-radius: 5px;
-        text-decoration: none;
-        transition: background-color 0.3s;
-    }
-    .btn-back:hover {
-        background-color: #5a6268;
-    }
 </style>
 <form id="editPersonForm">
     <input type="hidden" id="personId" name="personId">
@@ -114,9 +127,6 @@
 
     <button type="submit">Сохранить изменения</button>
 </form>
-
-<!-- Кнопка "Назад" -->
-<a href="/" class="btn-back">Назад</a>
 
 </body>
 </html>

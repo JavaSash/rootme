@@ -3,15 +3,17 @@ package ru.stepenko.rootme.controller
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.GetMapping
+import ru.stepenko.rootme.service.PersonService
 
 @Controller
-class ViewApi {
+class ViewApi(
+    private val personService: PersonService
+) {
 
     @GetMapping("/")
-    fun index(model: Model): String {
-        model.addAttribute("name", "Пользователь")
-        return "index"
-    }
+    fun index(model: Model): String =
+        if (personService.isNewTree()) "create-person"
+        else "people-list"
 
     @GetMapping("/create-person")
     fun createPerson(): String? {
@@ -29,7 +31,7 @@ class ViewApi {
     }
 
     @GetMapping("/people-list")
-    fun getAllPeople(): String? {
-        return "people-list"
-    }
+    fun getAllPeople(): String =
+        if (personService.isNewTree()) "create-person"
+        else "people-list"
 }

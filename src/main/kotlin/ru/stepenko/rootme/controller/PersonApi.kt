@@ -20,7 +20,7 @@ class PersonApi(private val personService: PersonService) {
     /**
      * Чтобы обновить конкретного человека, надо в теле указать имеющийся id помимо новых значений полей
      */
-    @PutMapping("/update/{personUuid}")
+    @PutMapping("/edit/{personUuid}")
     fun update(
         @PathVariable personUuid: UUID,
         @RequestBody person: PersonRq
