@@ -1,0 +1,119 @@
+<!-- create-person.html -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Генеалогическое дерево - Создание нового человека</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('#createPersonForm').on('submit', function (e) {
+                e.preventDefault();
+
+                const personData = {
+                    firstName: $('#firstName').val(),
+                    lastName: $('#lastName').val(),
+                    patronymic: $('#patronymic').val(),
+                    gender: $('#gender').val(),
+                    birthDate: $('#birthDate').val(),
+                    birthCountry: $('#birthCountry').val(),
+                    birthRegion: $('#birthRegion').val(),
+                    birthCity: $('#birthCity').val()
+                };
+
+                $.ajax({
+                    url: '/api/v1/person/create',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(personData),
+                    success: function (response) {
+                        if (response.message) {
+                            alert(response.message);
+                        }
+                        console.log('Created person:', response.data);
+                        // Redirect to another page or display success message
+                    },
+                    error: function (xhr, status, error) {
+                        alert('Ошибка создания персоны: ' + xhr.responseText);
+                    }
+                });
+            });
+        });
+    </script>
+</head>
+<body>
+<h1>Генеалогическое дерево</h1>
+
+<h2>Создать нового человека</h2>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+    }
+    .menu {
+        list-style-type: none;
+        padding: 0;
+    }
+    .menu li {
+        margin: 10px 0;
+    }
+    .menu a {
+        text-decoration: none;
+        padding: 10px;
+        background-color: #007BFF;
+        color: white;
+        border-radius: 5px;
+        transition: background-color 0.3s;
+    }
+    .menu a:hover {
+        background-color: #0056b3;
+    }
+    .btn-back {
+        display: inline-block;
+        margin-top: 20px;
+        padding: 10px;
+        background-color: #6c757d;
+        color: white;
+        border-radius: 5px;
+        text-decoration: none;
+        transition: background-color 0.3s;
+    }
+    .btn-back:hover {
+        background-color: #5a6268;
+    }
+</style>
+<form id="createPersonForm">
+    <label for="firstName">Имя:</label>
+    <input type="text" id="firstName" name="firstName" required><br>
+
+    <label for="lastName">Фамилия:</label>
+    <input type="text" id="lastName" name="lastName"><br>
+
+    <label for="patronymic">Отчество:</label>
+    <input type="text" id="patronymic" name="patronymic"><br>
+
+    <label for="gender">Пол:</label>
+    <select id="gender" name="gender" required>
+        <option value="MALE">Мужской</option>
+        <option value="FEMALE">Женский</option>
+    </select><br>
+
+    <label for="birthDate">Дата рождения:</label>
+    <input type="date" id="birthDate" name="birthDate"><br>
+
+    <label for="birthCountry">Страна рождения:</label>
+    <input type="text" id="birthCountry" name="birthCountry"><br>
+
+    <label for="birthRegion">Регион рождения:</label>
+    <input type="text" id="birthRegion" name="birthRegion"><br>
+
+    <label for="birthCity">Город рождения:</label>
+    <input type="text" id="birthCity" name="birthCity"><br>
+
+    <button type="submit">Создать</button>
+</form>
+
+<!-- Кнопка "Назад" -->
+<a href="/" class="btn-back">Назад</a>
+
+</body>
+</html>

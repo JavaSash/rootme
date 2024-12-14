@@ -45,12 +45,15 @@ class PersonService(private val personRepository: PersonRepository) {
         formResponseWrapper(
             msg = CrudStatus.DELETED.name,
             data = personRepository.deleteById(personId)
-        ) }.getOrElse { throwPersonNotFound(personId) }
+        ) }.getOrElse { throw PersonNotFoundException("Person with id=$personId not found") }
 
     private fun getPersonOrThrowExc(personId: UUID) = personRepository.findById(personId)
-        .orElseThrow { throwPersonNotFound(personId) }
+        .orElseThrow { throw PersonNotFoundException("Person with id=$personId not found") }
 
-    private fun throwPersonNotFound(personId: UUID): Throwable? {
-        throw PersonNotFoundException("Person with id=$personId not found")
-    }
+    fun getAllPersons(): ResponseWrapper =
+        formResponseWrapper(
+            msg = CrudStatus.FOUND.name,
+            data = personRepository.findAll()
+        )
+
 }

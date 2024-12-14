@@ -1,0 +1,43 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Генеалогическое дерево - Главная</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .menu {
+            list-style-type: none;
+            padding: 0;
+        }
+        .menu li {
+            margin: 10px 0;
+        }
+        .menu a {
+            text-decoration: none;
+            padding: 10px;
+            background-color: #007BFF;
+            color: white;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        .menu a:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+<h1>Генеалогическое дерево</h1>
+
+<h2>Меню</h2>
+<ul class="menu">
+    <li><a href="/create-person">Создать нового человека</a></li>
+    <li><a href="/edit-person">Редактировать информацию о человеке</a></li>
+    <li><a href="/create-relationship">Создать отношения</a></li>
+    <li><a href="/people-list">Список всех людей</a></li>
+</ul>
+
+</body>
+</html>

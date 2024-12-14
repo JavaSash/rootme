@@ -15,5 +15,5 @@ class AppConfig {
     fun objectMapper(): ObjectMapper = jacksonObjectMapper()
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
         .registerModule(JavaTimeModule())
-        .setPropertyNamingStrategy(PropertyNamingStrategies.SnakeCaseStrategy.INSTANCE)
+        .setPropertyNamingStrategy(PropertyNamingStrategies.LowerCamelCaseStrategy.INSTANCE)
 }

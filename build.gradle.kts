@@ -34,10 +34,8 @@ dependencies {
 	implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.13.3")
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 
-//	implementation("org.springframework.boot:spring-boot-starter-thymeleaf:3.0.4")
-//	Logging
+	implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
 
-//	testImplementation("ch.qos.logback:logback-classic:1.4.4")
 //Tests
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
