@@ -1,7 +1,6 @@
 package ru.stepenko.rootme.controller
 
 import org.springframework.stereotype.Controller
-import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.GetMapping
 import ru.stepenko.rootme.service.PersonService
 
@@ -11,27 +10,18 @@ class ViewApi(
 ) {
 
     @GetMapping("/")
-    fun index(model: Model): String =
-        if (personService.isNewTree()) "create-person"
-        else "people-list"
+    fun main(): String = chooseMainView()
 
     @GetMapping("/create-person")
-    fun createPerson(): String? {
-        return "create-person"
-    }
+    fun createPerson(): String = "create-person"
 
     @GetMapping("/edit-person")
-    fun editPerson(): String? {
-        return "edit-person"
-    }
-
-    @GetMapping("/create-relationship")
-    fun createRelationship(): String? {
-        return "create-relationship"
-    }
+    fun editPerson(): String = "edit-person"
 
     @GetMapping("/people-list")
-    fun getAllPeople(): String =
+    fun getAllPeople(): String = chooseMainView()
+
+    private fun chooseMainView(): String =
         if (personService.isNewTree()) "create-person"
         else "people-list"
 }
