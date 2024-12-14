@@ -41,10 +41,7 @@
                                 url: deleteUrl,
                                 type: 'DELETE',
                                 success: function (response) {
-                                    if (response.message) {
-                                        alert(response.message);
-                                        window.location.href = '/'; // Перенаправление на главную страницу
-                                    }
+                                    window.location.href = '/'; // Перенаправление на главную страницу
                                 },
                                 error: function (xhr, status, error) {
                                     alert('Ошибка удаления: ' + xhr.responseText);

@@ -27,9 +27,6 @@
                     contentType: 'application/json',
                     data: JSON.stringify(personData),
                     success: function (response) {
-                        if (response.message) {
-                            alert(response.message);
-                        }
                         console.log('Created person:', response.data);
                         // Redirect to the people list page
                         window.location.href = '/people-list';
