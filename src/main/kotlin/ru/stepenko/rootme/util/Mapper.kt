@@ -4,7 +4,7 @@ import ru.stepenko.rootme.model.ResponseWrapper
 import ru.stepenko.rootme.model.entity.PersonEntity
 import ru.stepenko.rootme.model.person.PersonRq
 
-fun PersonRq.toEntity() = PersonEntity(
+fun PersonRq.toEntity(isRoot: Boolean) = PersonEntity(
     firstName = this.firstName,
     lastName = this.lastName,
     patronymic = this.patronymic,
@@ -12,7 +12,8 @@ fun PersonRq.toEntity() = PersonEntity(
     birthDate = this.birthDate,
     birthCountry = this.birthCountry,
     birthRegion = this.birthRegion,
-    birthCity = this.birthCity
+    birthCity = this.birthCity,
+    isRoot = isRoot
 )
 
 fun formResponseWrapper(msg: String?, data: Any? = null): ResponseWrapper =

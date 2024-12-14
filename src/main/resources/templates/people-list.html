@@ -1,4 +1,3 @@
-<!-- people-list.html -->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -7,6 +6,7 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         $(document).ready(function () {
+            // Загружаем список людей
             $.ajax({
                 url: '/api/v1/person/get',
                 type: 'GET',
@@ -26,27 +26,32 @@
                                     <div class="actions">
                                         <a href="/create-person" class="add-family-member">Add</a>
                                         <a href="/edit-person?id=${person.id}">Edit</a>
-                                        <a href="/api/v1/person/delete/${person.id}" class="delete">Delete</a>
+                                        <a href="#" class="delete" data-id="${person.id}" data-is-root="${person.isRoot}">Delete</a>
                                     </div>
                                 </div>
                             `;
                         });
                         $('#peopleList').html(html);
 
-                        // Удаление члена семьи
+                        // Обработка клика по "Delete"
                         $('.delete').on('click', function (e) {
                             e.preventDefault();
-                            const deleteUrl = $(this).attr('href');
-                            $.ajax({
-                                url: deleteUrl,
-                                type: 'DELETE',
-                                success: function (response) {
-                                    window.location.href = '/'; // Перенаправление на главную страницу
-                                },
-                                error: function (xhr, status, error) {
-                                    alert('Ошибка удаления: ' + xhr.responseText);
-                                }
-                            });
+                            const personId = $(this).data('id');
+                            const isRoot = $(this).data('is-root');
+
+                            if (isRoot) {
+                                // Показать предупреждающее окно для корневой личности
+                                $('#confirmationModal').show();
+                                $('#confirmDelete').off('click').on('click', function () {
+                                    deletePerson(personId);
+                                    $('#confirmationModal').hide();
+                                });
+                                $('#cancelDelete').on('click', function () {
+                                    $('#confirmationModal').hide();
+                                });
+                            } else {
+                                deletePerson(personId);
+                            }
                         });
                     }
                 },
@@ -54,58 +59,108 @@
                     alert('Ошибка загрузки списка людей: ' + xhr.responseText);
                 }
             });
+
+            // Функция удаления персоны
+            function deletePerson(personId) {
+                $.ajax({
+                    url: `/api/v1/person/delete/${personId}`,
+                    type: 'DELETE',
+                    success: function () {
+                        window.location.href = '/'; // Перезагрузка страницы
+                    },
+                    error: function (xhr) {
+                        alert('Ошибка удаления: ' + xhr.responseText);
+                    }
+                });
+            }
         });
     </script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .menu {
+            list-style-type: none;
+            padding: 0;
+        }
+        .menu li {
+            margin: 10px 0;
+        }
+        .menu a {
+            text-decoration: none;
+            padding: 10px;
+            background-color: #007BFF;
+            color: white;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        .menu a:hover {
+            background-color: #0056b3;
+        }
+        .person-card {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            box-sizing: border-box;
+            text-align: left;
+            max-width: 300px;
+            margin: 0 auto 10px;
+            position: relative;
+        }
+        .actions {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+        .actions a {
+            margin-left: 10px;
+        }
+        /* Стили для модального окна */
+        #confirmationModal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            background-color: white;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            text-align: center;
+            padding: 20px;
+        }
+        #confirmationModal button {
+            margin: 10px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #confirmDelete {
+            background-color: #dc3545;
+            color: white;
+        }
+        #cancelDelete {
+            background-color: #6c757d;
+            color: white;
+        }
+    </style>
 </head>
 <body>
 <h1>Генеалогическое дерево</h1>
-
 <h2>Список всех людей</h2>
-<style>
-    body {
-        font-family: Arial, sans-serif;
-    }
-    .menu {
-        list-style-type: none;
-        padding: 0;
-    }
-    .menu li {
-        margin: 10px 0;
-    }
-    .menu a {
-        text-decoration: none;
-        padding: 10px;
-        background-color: #007BFF;
-        color: white;
-        border-radius: 5px;
-        transition: background-color 0.3s;
-    }
-    .menu a:hover {
-        background-color: #0056b3;
-    }
-    .person-card {
-        padding: 10px;
-        border: 1px solid #ccc;
-        border-radius: 5px;
-        background-color: #f9f9f9;
-        box-sizing: border-box;
-        text-align: left;
-        max-width: 300px; /* Ограничение ширины карточки */
-        margin: 0 auto 10px; /* Центрирование и отступы снизу */
-        position: relative; /* Для корректного позиционирования иконок */
-    }
-    .actions {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-    }
-    .actions a {
-        margin-left: 10px;
-    }
-</style>
 <div id="peopleList">
-    <!-- Данные людей будут отображены здесь -->
+    <!-- Список людей загружается динамически -->
 </div>
 
+<!-- Модальное окно -->
+<div id="confirmationModal">
+    <p>Вы собираетесь удалить корневую личность. Это удалит всё дерево. Вы уверены?</p>
+    <button id="confirmDelete">Удалить</button>
+    <button id="cancelDelete">Отмена</button>
+</div>
 </body>
 </html>

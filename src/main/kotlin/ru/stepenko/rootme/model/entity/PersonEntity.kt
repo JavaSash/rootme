@@ -28,6 +28,9 @@ data class PersonEntity(
     var birthRegion: String?,
     @Column(name = "birth_city")
     var birthCity: String?,
-//    @Column
-//    var relatedRelationship: RelatedRelationship?,
-)
+    /**
+     * First created person in tree is root
+     */
+    @Column(name = "is_root")
+    var isRoot: Boolean
+): AuditEntity()

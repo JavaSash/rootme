@@ -14,11 +14,9 @@ import java.util.*
 class PersonService(private val personRepository: PersonRepository) {
 
     fun create(person: PersonRq) =
-        formResponseWrapper(msg = CrudStatus.CREATED.name, data = personRepository.save(person.toEntity()))
+        formResponseWrapper(msg = CrudStatus.CREATED.name, data = personRepository.save(person.toEntity(isNewTree())))
 
     fun update(person: PersonRq, personId: UUID): ResponseWrapper {
-//        TODO добавить проверку на существование дерева с таким id. Если такого id нет, то создаём нового человека,
-//         если есть обновляем. Возможно есть смысл create+update везде заменить на patch
         val existPerson = getPersonOrThrowExc(personId)
         return formResponseWrapper(
             msg = CrudStatus.UPDATED.name,
@@ -44,7 +42,7 @@ class PersonService(private val personRepository: PersonRepository) {
     fun delete(personId: UUID) = runCatching {
         formResponseWrapper(
             msg = CrudStatus.DELETED.name,
-            data = personRepository.deleteById(personId)
+            data = deleteWithRootCheck(personId)
         ) }.getOrElse { throw PersonNotFoundException("Person with id=$personId not found") }
 
     fun getAllPersons(): ResponseWrapper =
@@ -57,4 +55,9 @@ class PersonService(private val personRepository: PersonRepository) {
 
     private fun getPersonOrThrowExc(personId: UUID) = personRepository.findById(personId)
         .orElseThrow { throw PersonNotFoundException("Person with id=$personId not found") }
+
+    private fun deleteWithRootCheck(personId: UUID) {
+        if (getPersonOrThrowExc(personId).isRoot) personRepository.deleteAll()
+        else personRepository.deleteById(personId)
+    }
 }
