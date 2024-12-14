@@ -25,7 +25,7 @@
                                     <p>Город рождения: ${person.birthCity || ''}</p>
                                     <div class="actions">
                                         <a href="/create-person" class="add-family-member">Add</a>
-                                        <a href="/edit-person">Edit</a>
+                                        <a href="/edit-person?id=${person.id}">Edit</a>
                                         <a href="/api/v1/person/delete/${person.id}" class="delete">Delete</a>
                                     </div>
                                 </div>

@@ -7,13 +7,14 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         $(document).ready(function () {
-            // Автозаполнение формы данными из карточки
+            // Получение параметра из URL
             const urlParams = new URLSearchParams(window.location.search);
             const personId = urlParams.get('id');
             if (personId) {
                 $('#personId').val(personId);
+                // Запрос данных пользователя и автозаполнение формы
                 $.ajax({
-                    url: `/api/v1/person/${personId}`,
+                    url: `/api/v1/person/get/${personId}`,
                     type: 'GET',
                     success: function (response) {
                         if (response.data) {
@@ -94,6 +95,7 @@
     .menu a:hover {
         background-color: #0056b3;
     }
+
 </style>
 <form id="editPersonForm">
     <input type="hidden" id="personId" name="personId">
