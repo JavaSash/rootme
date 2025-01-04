@@ -44,10 +44,7 @@ class PersonService(private val personRepository: PersonRepository) {
     fun getAllPersons() = personRepository.findAll().toListDto()
 
     fun isNewTree(): Boolean =
-        personRepository.findAll().isEmpty().also { logger.info { ">>> Is new tree: $it" } } //todo debug log
-
-    fun isRoot(id: UUID): Boolean =
-        getPersonOrThrowExc(id).isRoot.also { logger.info { ">>> Person $id is root: $it" } }
+        personRepository.findAll().isEmpty().also { logger.info { ">>> Is new tree: $it" } } // todo debug log
 
     private fun getPersonOrThrowExc(personId: UUID) = personRepository.findById(personId)
         .orElseThrow { throw PersonNotFoundException("Person with id=$personId not found") }

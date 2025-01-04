@@ -30,7 +30,8 @@ fun PersonEntity.toDto() = PersonDto(
     birthRegion = this.birthRegion,
     birthCity = this.birthCity,
     relationship = this.relationship.desc,
-    isRoot = this.isRoot
+    isRoot = this.isRoot,
+    generation = this.generation
 )
 
 fun List<PersonEntity>.toListDto(): List<PersonDto> {

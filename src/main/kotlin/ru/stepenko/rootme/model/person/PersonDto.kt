@@ -15,5 +15,6 @@ data class PersonDto(
     val birthCountry: String?,
     val birthRegion: String?,
     val birthCity: String?,
-    val isRoot: Boolean
+    val isRoot: Boolean,
+    val generation: Int
 )

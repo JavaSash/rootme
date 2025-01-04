@@ -10,7 +10,7 @@ import java.util.*
 @RestController
 @RequestMapping("/api/v1/person")
 class PersonApi(private val personService: PersonService) {
-
+//todo переписать все круды с учётом отношений для neo4j
     companion object : KLogging()
 
     @PostMapping("/create")

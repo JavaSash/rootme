@@ -1,40 +1,54 @@
 package ru.stepenko.rootme.model.entity
 
-import jakarta.persistence.Column
-import jakarta.persistence.Entity
-import jakarta.persistence.Id
+import org.springframework.data.annotation.Id
+import org.springframework.data.neo4j.core.schema.GeneratedValue
+import org.springframework.data.neo4j.core.schema.Node
+import org.springframework.data.neo4j.core.schema.Relationship
 import ru.stepenko.rootme.model.person.Gender
-import ru.stepenko.rootme.model.person.Relationship
 import java.time.LocalDate
 import java.util.*
 
-@Entity(name = "persons")
+@Node("Person")
 data class PersonEntity(
     @Id
-    @Column
+    @GeneratedValue
     val id: UUID = UUID.randomUUID(),
-    @Column(name = "first_name")
     var firstName: String,
-    @Column(name = "last_name")
     var lastName: String?,
-    @Column
     var patronymic: String?,
-    @Column
     var gender: Gender,
-    @Column(name = "birth_date")
     var birthDate: LocalDate?,
-    @Column(name = "death_date")
     var deathDate: LocalDate?,
-    @Column(name = "birth_country")
     var birthCountry: String?,
-    @Column(name = "birth_region")
     var birthRegion: String?,
-    @Column(name = "birth_city")
     var birthCity: String?,
     /**
      * First created person in tree is root
      */
-    @Column(name = "is_root")
     var isRoot: Boolean,
-    var relationship: Relationship
-): AuditEntity()
+    var relationship: ru.stepenko.rootme.model.person.Relationship,
+    /**
+     * Generation 0 includes the root person himself and his closest relatives,
+     * and the children/parents are shifted by +1/-1
+     */
+    var generation: Int = 0,
+    /**
+     * Relationships to children.
+     */
+    @Relationship(type = "PARENT_OF", direction = Relationship.Direction.OUTGOING)
+    var children: MutableSet<PersonEntity> = mutableSetOf(),
+
+    /**
+     * Relationship to spouse.
+     * Instead of using UNDIRECTED, we'll handle spouse relationships symmetrically in application logic.
+     * When saving or uploading data, it is necessary to ensure that it is mirrored to the other side.
+     */
+    @Relationship(type = "SPOUSE_OF", direction = Relationship.Direction.OUTGOING)
+    var spouse: PersonEntity? = null,
+
+    /**
+     * Relationship to parents.
+     */
+    @Relationship(type = "CHILD_OF", direction = Relationship.Direction.INCOMING)
+    var parents: MutableSet<PersonEntity> = mutableSetOf()
+)

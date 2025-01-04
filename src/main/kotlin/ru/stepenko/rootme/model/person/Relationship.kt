@@ -45,5 +45,5 @@ enum class Relationship(val desc: String) {
     // -5 поколение
     GREAT_GREAT_GREAT_GRANDFATHER("Прапрапрадедушка"),
     GREAT_GREAT_GREAT_GRANDMOTHER("Прапрапрабабушка"),
-    STUB("Степень родства пока не поддерживается")
+    NONE("Степень родства пока не поддерживается")
 }

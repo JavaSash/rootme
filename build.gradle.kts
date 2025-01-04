@@ -6,12 +6,6 @@ plugins {
 	val kotlinVersion = "1.8.22"
 	kotlin("jvm") version kotlinVersion
 	kotlin("plugin.spring") version kotlinVersion
-	kotlin("plugin.jpa") version kotlinVersion
-	kotlin("plugin.allopen") version kotlinVersion
-}
-
-allOpen {
-	annotations("javax.persistence.Entity")
 }
 
 group = "ru.stepenko"
@@ -24,16 +18,17 @@ repositories {
 }
 
 dependencies {
-	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 	implementation("org.springframework.boot:spring-boot-starter-web")
 	implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.0")
 	implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.0")
 	implementation("io.github.microutils:kotlin-logging-jvm:3.0.4")
 
-	implementation("org.postgresql:postgresql:42.3.1")
+// Data
+	implementation("org.springframework.boot:spring-boot-starter-data-neo4j")
+	implementation("org.neo4j.driver:neo4j-java-driver")
 	implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.13.3")
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
-
+// Frontend
 	implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
 
 //Tests

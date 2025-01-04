@@ -3,6 +3,7 @@ family tree
 
 ## DB
 To start db use src/docker-compose.yml
+DB UI http://localhost:7474/browser/
 
 ## View
 
