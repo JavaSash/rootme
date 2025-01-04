@@ -10,12 +10,22 @@
             $('#createPersonForm').on('submit', function (e) {
                 e.preventDefault();
 
+                const isRoot = $('#createPersonForm').data('is-root'); // Читаем значение флага
+                let relationship;
+                if (isRoot) {
+                    relationship = 'YOU'; // Для корневой личности
+                } else {
+                    relationship = $('#relationship-select').val(); // Для остальных
+                }
+
                 const personData = {
                     firstName: $('#firstName').val(),
                     lastName: $('#lastName').val(),
                     patronymic: $('#patronymic').val(),
                     gender: $('#gender').val(),
+                    relationship: relationship,
                     birthDate: $('#birthDate').val(),
+                    deathDate: $('#deathDate').val(),
                     birthCountry: $('#birthCountry').val(),
                     birthRegion: $('#birthRegion').val(),
                     birthCity: $('#birthCity').val()
@@ -27,7 +37,7 @@
                     contentType: 'application/json',
                     data: JSON.stringify(personData),
                     success: function (response) {
-                        console.log('Created person:', response.data);
+                        console.log('Created person:', response);
                         // Redirect to the people list page
                         window.location.href = '/people-list';
                     },
@@ -83,8 +93,27 @@
         <option value="FEMALE">Женский</option>
     </select><br>
 
+    <!-- Поле "Родство" отображается только если isRoot = false -->
+    <label for="relationship-select" th:if="!${isRoot}">Родство:</label>
+    <select id="relationship-select" name="relationship" th:if="!${isRoot}" required>
+        <option value="SON">Сын</option>
+        <option value="DAUGHTER">Дочь</option>
+        <option value="BROTHER">Брат</option>
+        <option value="SISTER">Сестра</option>
+        <option value="HUSBAND">Муж</option>
+        <option value="WIFE">Жена</option>
+        <option value="FATHER">Отец</option>
+        <option value="MOTHER">Мать</option>
+    </select>
+
+    <!-- Если isRoot = true, добавляем скрытое поле с автоматическим значением -->
+    <input type="hidden" id="relationship-hidden" name="relationship" value="YOU" th:if="${isRoot}"><br>
+
     <label for="birthDate">Дата рождения:</label>
     <input type="date" id="birthDate" name="birthDate"><br>
+
+    <label for="deathDate">Дата смерти:</label>
+    <input type="date" id="deathDate" name="deathDate"><br>
 
     <label for="birthCountry">Страна рождения:</label>
     <input type="text" id="birthCountry" name="birthCountry"><br>

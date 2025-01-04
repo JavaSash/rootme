@@ -4,6 +4,7 @@ import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import ru.stepenko.rootme.model.person.Gender
+import ru.stepenko.rootme.model.person.Relationship
 import java.time.LocalDate
 import java.util.*
 
@@ -22,6 +23,8 @@ data class PersonEntity(
     var gender: Gender,
     @Column(name = "birth_date")
     var birthDate: LocalDate?,
+    @Column(name = "death_date")
+    var deathDate: LocalDate?,
     @Column(name = "birth_country")
     var birthCountry: String?,
     @Column(name = "birth_region")
@@ -32,5 +35,6 @@ data class PersonEntity(
      * First created person in tree is root
      */
     @Column(name = "is_root")
-    var isRoot: Boolean
+    var isRoot: Boolean,
+    var relationship: Relationship
 ): AuditEntity()
