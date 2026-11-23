@@ -1,20 +1,15 @@
 server:
+  address: 127.0.0.1
   port: 8080
 
 spring:
   application:
     name: rootme
-  neo4j:
-    uri: bolt://localhost:7687
-    authentication:
-      username: neo4j
-      password: 12345678
-  thymeleaf:
-    prefix: classpath:/templates/
-    suffix: .html
-    mode: HTML
-    cache: false # false for dev mode
-
-logging:
-  level:
-    ROOT: INFO
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://127.0.0.1:5432/rootme}
+    username: rootme
+    password: ${DB_PASSWORD:rootme-local}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate

@@ -19,7 +19,7 @@ fun PersonRq.toEntity(isRoot: Boolean) = PersonEntity(
 )
 
 fun PersonEntity.toDto() = PersonDto(
-    id = this.id,
+    id = requireNotNull(this.id),
     firstName = this.firstName,
     lastName = this.lastName,
     patronymic = this.patronymic,
@@ -31,7 +31,10 @@ fun PersonEntity.toDto() = PersonDto(
     birthCity = this.birthCity,
     relationship = this.relationship.desc,
     isRoot = this.isRoot,
-    generation = this.generation
+    generation = this.generation,
+    children = this.children.toMutableSet(),
+    spouse = this.spouse,
+    parents = this.parents.toMutableSet()
 )
 
 fun List<PersonEntity>.toListDto(): List<PersonDto> {

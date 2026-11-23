@@ -1,7 +1,7 @@
 package ru.stepenko.rootme.repository
 
-import org.springframework.data.neo4j.repository.Neo4jRepository
+import org.springframework.data.jpa.repository.JpaRepository
 import ru.stepenko.rootme.model.entity.PersonEntity
 import java.util.*
 
-interface PersonRepository: Neo4jRepository<PersonEntity, UUID>
+interface PersonRepository : JpaRepository<PersonEntity, UUID>

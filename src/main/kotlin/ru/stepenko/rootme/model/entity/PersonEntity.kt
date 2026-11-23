@@ -1,21 +1,23 @@
 package ru.stepenko.rootme.model.entity
 
-import org.springframework.data.annotation.Id
-import org.springframework.data.neo4j.core.schema.GeneratedValue
-import org.springframework.data.neo4j.core.schema.Node
-import org.springframework.data.neo4j.core.schema.Relationship
+import com.fasterxml.jackson.annotation.JsonIgnore
+import jakarta.persistence.*
 import ru.stepenko.rootme.model.person.Gender
 import java.time.LocalDate
 import java.util.*
 
-@Node("Person")
-data class PersonEntity(
+@Entity
+@Table(name = "persons")
+class PersonEntity(
     @Id
-    @GeneratedValue
-    val id: UUID = UUID.randomUUID(),
+    @GeneratedValue(strategy = GenerationType.UUID)
+    var id: UUID? = null,
+    @Column(nullable = false)
     var firstName: String,
     var lastName: String?,
     var patronymic: String?,
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     var gender: Gender,
     var birthDate: LocalDate?,
     var deathDate: LocalDate?,
@@ -25,7 +27,10 @@ data class PersonEntity(
     /**
      * First created person in tree is root
      */
+    @Column(name = "is_root", nullable = false)
     var isRoot: Boolean,
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     var relationship: ru.stepenko.rootme.model.person.Relationship,
     /**
      * Generation 0 includes the root person himself and his closest relatives,
@@ -35,7 +40,13 @@ data class PersonEntity(
     /**
      * Relationships to children.
      */
-    @Relationship(type = "PARENT_OF", direction = Relationship.Direction.OUTGOING)
+    @get:JsonIgnore
+    @ManyToMany
+    @JoinTable(
+        name = "person_parentage",
+        joinColumns = [JoinColumn(name = "parent_id")],
+        inverseJoinColumns = [JoinColumn(name = "child_id")],
+    )
     var children: MutableSet<PersonEntity> = mutableSetOf(),
 
     /**
@@ -43,12 +54,15 @@ data class PersonEntity(
      * Instead of using UNDIRECTED, we'll handle spouse relationships symmetrically in application logic.
      * When saving or uploading data, it is necessary to ensure that it is mirrored to the other side.
      */
-    @Relationship(type = "SPOUSE_OF", direction = Relationship.Direction.OUTGOING)
+    @get:JsonIgnore
+    @ManyToOne
+    @JoinColumn(name = "spouse_id")
     var spouse: PersonEntity? = null,
 
     /**
      * Relationship to parents.
      */
-    @Relationship(type = "CHILD_OF", direction = Relationship.Direction.INCOMING)
+    @get:JsonIgnore
+    @ManyToMany(mappedBy = "children")
     var parents: MutableSet<PersonEntity> = mutableSetOf()
 )

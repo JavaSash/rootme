@@ -1,7 +1,7 @@
 package ru.stepenko.rootme.service
 
-import mu.KLogging
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import ru.stepenko.rootme.exception.PersonNotFoundException
 import ru.stepenko.rootme.model.person.PersonDto
 import ru.stepenko.rootme.model.person.PersonRq
@@ -14,13 +14,12 @@ import java.util.*
 @Service
 class PersonService(private val personRepository: PersonRepository) {
 
-    companion object : KLogging()
-
+    @Transactional
     fun create(person: PersonRq) = personRepository.save(person.toEntity(isNewTree())).toDto()
 
+    @Transactional
     fun update(person: PersonRq, personId: UUID): PersonDto {
         val existPerson = getPersonOrThrowExc(personId)
-        logger.info { ">>> Person to update: $existPerson" }
         return personRepository.save(
             existPerson.apply {
                 this.firstName = person.firstName
@@ -28,32 +27,24 @@ class PersonService(private val personRepository: PersonRepository) {
                 this.patronymic = person.patronymic
                 this.gender = person.gender
                 this.birthDate = person.birthDate
+                this.deathDate = person.deathDate
                 this.birthCountry = person.birthCountry
                 this.birthRegion = person.birthRegion
                 this.birthCity = person.birthCity
             }).toDto()
-            .also { logger.info { ">>> Person updated: $it" } }
     }
 
-    fun getPerson(personId: UUID) = getPersonOrThrowExc(personId)//.toDto()
+    @Transactional(readOnly = true)
+    fun getPerson(personId: UUID) = getPersonOrThrowExc(personId).toDto()
 
-    fun delete(personId: UUID) = runCatching {
-        deleteWithRootCheck(personId)
-    }.getOrElse { throw PersonNotFoundException("Person with id=$personId not found") }
+    @Transactional
+    fun delete(personId: UUID) = personRepository.delete(getPersonOrThrowExc(personId))
 
+    @Transactional(readOnly = true)
     fun getAllPersons() = personRepository.findAll().toListDto()
 
-    fun isNewTree(): Boolean =
-        personRepository.findAll().isEmpty().also { logger.info { ">>> Is new tree: $it" } } // todo debug log
+    fun isNewTree(): Boolean = personRepository.count() == 0L
 
     private fun getPersonOrThrowExc(personId: UUID) = personRepository.findById(personId)
         .orElseThrow { throw PersonNotFoundException("Person with id=$personId not found") }
-        .also { logger.info { ">>> Person found: $it" } }
-
-    private fun deleteWithRootCheck(personId: UUID) {
-        if (getPersonOrThrowExc(personId).isRoot) personRepository.deleteAll()
-            .also { logger.info { ">>> Root person $personId deleted. Tree cleared" } }
-        else personRepository.deleteById(personId)
-            .also { logger.info { ">>> Person $personId deleted" } }
-    }
 }

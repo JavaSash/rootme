@@ -1,31 +1,19 @@
-version: "3.9"
 services:
-  neo4j:
-    container_name: neo4j
-    image: neo4j:5.12
+  postgres:
+    image: postgres:16
     environment:
-      NEO4J_AUTH: "neo4j/12345678" # Логин и пароль для доступа
+      POSTGRES_DB: rootme
+      POSTGRES_USER: rootme
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-rootme-local}
     ports:
-      - "7687:7687" # Bolt-порт для работы приложения
-      - "7474:7474" # HTTP-порт для доступа к интерфейсу Neo4j Browser
+      - "127.0.0.1:${DB_PORT:-5432}:5432"
     volumes:
-      - neo4j_data:/data
-      - neo4j_logs:/logs
-
-  app: # todo can't start with ne04j. Error with psql. Why?
-    container_name: rootme
-    build:
-      context: .
-      dockerfile: Dockerfile
-    environment:
-      SPRING_NEO4J_URI: "bolt://neo4j:7687"
-      SPRING_NEO4J_USERNAME: "neo4j"
-      SPRING_NEO4J_PASSWORD: "12345678"
-    depends_on:
-      - neo4j
-    ports:
-      - "8080:8080"
+      - postgres16_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "rootme", "-d", "rootme"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
 
 volumes:
-  neo4j_data:
-  neo4j_logs:
+  postgres16_data:

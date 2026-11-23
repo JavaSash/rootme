@@ -1,5 +1,6 @@
 package ru.stepenko.rootme.model.person
 
+import ru.stepenko.rootme.model.entity.PersonEntity
 import java.time.LocalDate
 import java.util.*
 
@@ -16,5 +17,8 @@ data class PersonDto(
     val birthRegion: String?,
     val birthCity: String?,
     val isRoot: Boolean,
-    val generation: Int
+    val generation: Int,
+    val children: MutableSet<PersonEntity>,
+    val spouse: PersonEntity?,
+    val parents: MutableSet<PersonEntity>
 )
