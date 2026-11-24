@@ -1,4 +1,4 @@
-param([switch]$NoBrowser)
+param([switch]$NoBrowser, [switch]$Rebuild)
 
 . (Join-Path $PSScriptRoot 'launcher.ps1')
 
@@ -61,6 +61,64 @@ function Ensure-FrontendDependencies($frontend) {
         Run-Logged 'npm-ci' $env:ComSpec '/d /s /c "npm.cmd ci"' $frontend 300
         [IO.File]::WriteAllText($stamp, $hash)
     }
+}
+
+function Get-BackendInputsFingerprint {
+    $files = @(
+        foreach ($name in @('build.gradle.kts', 'settings.gradle.kts', 'gradle.properties', 'gradlew.bat')) {
+            Get-Item -LiteralPath (Join-Path $RepoRoot $name)
+        }
+        Get-ChildItem -LiteralPath (Join-Path $RepoRoot 'gradle'), (Join-Path $RepoRoot 'src/main') -Recurse -File |
+            Where-Object { $_.FullName -notlike '*\src\main\resources\data\import\*' }
+    )
+    $gradleHome = if ($env:GRADLE_USER_HOME) { $env:GRADLE_USER_HOME } else { Join-Path $env:USERPROFILE '.gradle' }
+    foreach ($name in @('gradle.properties', 'init.gradle', 'init.gradle.kts')) {
+        $files += @(Get-Item -LiteralPath (Join-Path $gradleHome $name) -ErrorAction SilentlyContinue)
+    }
+    $files += @(Get-ChildItem -LiteralPath (Join-Path $gradleHome 'init.d') -File -ErrorAction SilentlyContinue)
+    $files += @(Get-Item -LiteralPath (Join-Path $env:JAVA_HOME 'release') -ErrorAction SilentlyContinue)
+    $inputs = @($env:JAVA_HOME, $gradleHome, $env:GRADLE_OPTS, $env:JAVA_OPTS, $env:JAVA_TOOL_OPTIONS, $env:JDK_JAVA_OPTIONS)
+    $inputs += $files | Sort-Object FullName -Unique | ForEach-Object {
+        (Get-FileHash -LiteralPath $_.FullName).Hash + ' ' + $_.FullName
+    }
+    $hasher = [Security.Cryptography.SHA256]::Create()
+    try {
+        $bytes = [Text.Encoding]::UTF8.GetBytes(($inputs -join [Environment]::NewLine))
+        return [BitConverter]::ToString($hasher.ComputeHash($bytes)).Replace('-', '')
+    } finally { $hasher.Dispose() }
+}
+
+function Get-BackendJar([switch]$ForceBuild) {
+    $cacheFile = Join-Path $RunDir 'backend-build.json'
+    $lib = Join-Path $RepoRoot 'build/libs'
+    $fingerprint = Get-BackendInputsFingerprint
+    if (!$ForceBuild -and (Test-Path -LiteralPath $cacheFile -PathType Leaf)) {
+        try {
+            $cache = Get-Content -LiteralPath $cacheFile -Raw | ConvertFrom-Json
+            if ($cache.inputs -eq $fingerprint -and $cache.jar -match '^rootme-[^\\/]+\.jar$') {
+                $candidate = Join-Path $lib $cache.jar
+                if ((Test-Path -LiteralPath $candidate -PathType Leaf) -and
+                    (Get-FileHash -LiteralPath $candidate).Hash -eq $cache.sha256) {
+                    Write-Host 'Backend inputs are unchanged. Reusing the existing JAR.'
+                    return Get-Item -LiteralPath $candidate
+                }
+            }
+        } catch { Write-Warning 'Could not read the backend build cache. Rebuilding.' }
+    }
+
+    if (Test-Path -LiteralPath $cacheFile) { Remove-Item -LiteralPath $cacheFile }
+    Write-Host 'Building backend with the Gradle Wrapper...'
+    $gradle = '/d /s /c "gradlew.bat --no-daemon "-Dorg.gradle.java.home=%JAVA_HOME%" bootJar"'
+    Run-Logged 'gradle' $env:ComSpec $gradle $RepoRoot 360
+    $jar = Get-ChildItem -LiteralPath $lib -Filter 'rootme-*.jar' -File |
+        Where-Object { $_.Name -notlike '*-plain.jar' } | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+    if (!$jar) { throw 'The Gradle Wrapper did not produce a runnable RootMe JAR.' }
+    if ((Get-BackendInputsFingerprint) -ne $fingerprint) {
+        throw 'Backend inputs changed during the build. Run start.bat again.'
+    }
+    $cache = @{ inputs = $fingerprint; jar = $jar.Name; sha256 = (Get-FileHash -LiteralPath $jar.FullName).Hash }
+    [IO.File]::WriteAllText($cacheFile, ($cache | ConvertTo-Json))
+    return $jar
 }
 
 function Get-Port([string]$value, [int]$default, [string]$name) {
@@ -158,12 +216,7 @@ try {
     Run-Logged 'postgres-start' $script:DockerExe (Quote-Arguments $arguments) $RepoRoot 120
     Wait-Ready 'PostgreSQL' 30 { Invoke-Docker (Compose-Args $project @('exec', '-T', 'postgres', 'pg_isready', '-U', 'rootme', '-d', 'rootme')) -Quiet }
 
-    Write-Host 'Building backend with the Gradle Wrapper...'
-    $gradle = '/d /s /c "gradlew.bat --no-daemon "-Dorg.gradle.java.home=%JAVA_HOME%" bootJar"'
-    Run-Logged 'gradle' $env:ComSpec $gradle $RepoRoot 360
-    $jar = Get-ChildItem -LiteralPath (Join-Path $RepoRoot 'build/libs') -Filter 'rootme-*.jar' -File |
-        Where-Object { $_.Name -notlike '*-plain.jar' } | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-    if (!$jar) { throw 'The Gradle Wrapper did not produce a runnable RootMe JAR.' }
+    $jar = Get-BackendJar -ForceBuild:$Rebuild
 
     Write-Host "Starting backend on port $backendPort..."
     $env:ROOTME_LAUNCHER_ENABLED = 'true'
