@@ -41,3 +41,6 @@ out/
 /.env
 /data/
 /backups/
+/logs/
+/.rootme-run/
+/src/main/resources/data/import/

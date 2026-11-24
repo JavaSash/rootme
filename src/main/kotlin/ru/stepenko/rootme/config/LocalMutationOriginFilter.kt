@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
 import org.springframework.http.HttpStatus
@@ -14,10 +15,14 @@ import org.springframework.web.filter.OncePerRequestFilter
 
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
-class LocalMutationOriginFilter(private val json: ObjectMapper) : OncePerRequestFilter() {
+class LocalMutationOriginFilter(
+    private val json: ObjectMapper,
+    @Value("\${rootme.frontend-port:5173}") private val frontendPort: Int,
+    @Value("\${server.port:8080}") private val backendPort: Int,
+) : OncePerRequestFilter() {
     private val mutations = setOf("POST", "PUT", "PATCH", "DELETE")
     private val origins = listOf("localhost", "127.0.0.1").flatMap { host ->
-        listOf(8080, 5173, 4173).map { port -> "http://$host:$port" }
+        listOf(backendPort, frontendPort, 4173).map { port -> "http://$host:$port" }
     }.toSet()
 
     override fun doFilterInternal(request: HttpServletRequest, response: HttpServletResponse, chain: FilterChain) {

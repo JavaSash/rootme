@@ -1,13 +1,17 @@
 server:
   address: 127.0.0.1
   port: 8080
+  shutdown: graceful
 
 rootme:
+  frontend-port: ${ROOTME_FRONTEND_PORT:5173}
   storage:
     photos-directory: ${ROOTME_STORAGE_PHOTOS_DIRECTORY:data/photos}
     backups-directory: ${ROOTME_STORAGE_BACKUPS_DIRECTORY:backups}
 
 spring:
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
   application:
     name: rootme
   servlet:

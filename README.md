@@ -4,7 +4,20 @@
 
 ## Запуск на Windows
 
-Требуются JDK 17, Node.js 22 или 24 и запущенный Docker Desktop с Docker Compose.
+Требуются Windows 10 или 11, JDK 17, Node.js 24 или 22.12+ и Docker Desktop с Docker Compose. Права администратора для скриптов не нужны.
+
+**Запуск одним кликом.** Дважды щёлкните `start.bat`. Он запустит Docker Desktop при необходимости, дождётся PostgreSQL, соберёт backend через Gradle Wrapper, запустит Vite и откроет [RootMe](http://127.0.0.1:5173). Если приложение уже запущено этим скриптом, откроется существующий экземпляр.
+
+**Остановка одним кликом.** Дважды щёлкните `stop.bat`. Скрипт остановит Vite, дождётся штатного завершения Spring Boot и затем выполнит `docker compose down` для проекта RootMe. Docker Desktop продолжит работу. Именованный том PostgreSQL, фотографии и резервные копии сохранятся.
+
+Журналы находятся в `logs/`. Для диагностики начните с `backend.error.log`, `backend.log`, `frontend.error.log`, `gradle.error.log` или `npm-ci.error.log`. В `.rootme-run/` хранятся данные о запущенных процессах. Оставьте этот каталог на месте, пока приложение работает.
+
+- **Не найден JDK или npm.** Укажите путь к JDK 17 в `JAVA_HOME` или установите совместимый Node.js и добавьте его в `PATH`. Скрипт также ищет Node.js во встроенном рантайме IntelliJ IDEA.
+- **Порт занят.** Остановите предыдущий ручной запуск либо задайте свободные порты. `SERVER_PORT` меняет порт Spring Boot и адрес прокси Vite, `ROOTME_FRONTEND_PORT` — порт Vite, а `DB_PORT` — внешний порт PostgreSQL. Для запуска двойным щелчком задайте нужные переменные в настройках среды Windows. Из PowerShell можно передать их через `$env:...` и вызвать `.\start.bat`.
+- **PostgreSQL не готов.** Проверьте Docker Desktop и журналы `postgres-start.log` и `postgres-start.error.log`. Для уже созданной базы используйте пароль, с которым она была инициализирована.
+- **Backend не завершился вовремя.** PostgreSQL останется запущенным. Проверьте `backend.log` и повторите `stop.bat` после завершения backend.
+
+### Ручной запуск и остановка
 
 В PowerShell из корня репозитория запустите PostgreSQL и backend.
 
