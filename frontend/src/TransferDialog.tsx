@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { api, errorText, exportGedcom } from './api'
 import { Dialog } from './Editor'
-import type { ImportPreview, ImportSource } from './types'
+import type { GenealogyMdbPreview, ImportPreview, ImportSource } from './types'
 
 const fields = {
   firstName: 'Имя', lastName: 'Фамилия', patronymic: 'Отчество', gender: 'Пол',
@@ -20,8 +20,23 @@ const warnings: Record<string, string> = {
   STEP_USES_PEDI_PHRASE: 'Связи STEP переданы как «другое родство» с пояснением. Некоторые программы могут его не прочитать.',
 }
 
-export function TransferDialog({ onClose, onImported }: { onClose: () => void; onImported: () => void }) {
+const genealogyWarnings: Record<string, string> = {
+  UNSUPPORTED_UNION_DATES: 'Некоторые даты союзов имеют уточнения, которые RootMe не поддерживает.',
+  UNSUPPORTED_DATE_PRECISION: 'Некоторые даты с уточнениями не попадут в поля дат. Исходное описание дат персон сохранится в заметках.',
+  DUPLICATE_PARENT_CHILD_LINKS: 'Повторяющиеся связи между теми же родителем и ребёнком одного типа будут объединены.',
+  UNNAMED_PERSONS: 'В источнике есть персоны без имени.',
+  UNSUPPORTED_SOURCE_DATA: 'Фотографии, ссылки на документы, отдельные записи альтернативных имён, дополнительные события, заметки о союзах и настройки дерева не переносятся.',
+}
+
+export function TransferDialog({ onClose, onImported, onTreeImported }: {
+  onClose: () => void
+  onImported: () => void
+  onTreeImported: (rootId: string) => void
+}) {
   const [file, setFile] = useState<File>()
+  const [genealogyFile, setGenealogyFile] = useState<File>()
+  const [genealogy, setGenealogy] = useState<GenealogyMdbPreview>()
+  const [allowUnnamed, setAllowUnnamed] = useState(false)
   const [sources, setSources] = useState<ImportSource[]>([])
   const [selected, setSelected] = useState('')
   const [mapping, setMapping] = useState<Record<string, number>>({})
@@ -65,6 +80,52 @@ export function TransferDialog({ onClose, onImported }: { onClose: () => void; o
   }
 
   return <Dialog title="Импорт и экспорт" close={() => { if (!locked.current) onClose() }}>
+    <section className="backup-section">
+      <h3>Импорт генеалогического дерева из Access</h3>
+      <p>Переносит персон, родительские связи и союзы в пустую базу RootMe.</p>
+      <label>Генеалогический файл MDB<input type="file" accept=".mdb" disabled={busy} onChange={event => {
+        setGenealogyFile(event.target.files?.[0])
+        setGenealogy(undefined)
+        setAllowUnnamed(false)
+        setError(undefined)
+      }} /></label>
+      <button type="button" disabled={busy || !genealogyFile} onClick={() => {
+        if (!genealogyFile) return
+        setGenealogy(undefined)
+        setAllowUnnamed(false)
+        void run(async () => { setGenealogy(await api.previewGenealogyMdb(genealogyFile)) })
+      }}>Проверить файл и показать предпросмотр</button>
+      {genealogy && <div className="import-preview">
+        <p role="status">Формат — {genealogy.format === 'ROOTME_GENEALOGY_MDB_V1' ? 'генеалогический MDB' : genealogy.format}</p>
+        <dl>
+          <div><dt>Персоны</dt><dd>{genealogy.persons}</dd></div>
+          <div><dt>Связи родителей и детей</dt><dd>{genealogy.parentChildRelationships}</dd></div>
+          <div><dt>Союзы</dt><dd>{genealogy.partnerships}</dd></div>
+          <div><dt>Записи с ошибками</dt><dd>{genealogy.invalidRecords}</dd></div>
+          <div><dt>Неразрешённые ссылки</dt><dd>{genealogy.unresolvedReferences}</dd></div>
+        </dl>
+        {!genealogy.targetEmpty && <p className="error-box" role="alert">В текущей базе уже есть персоны. Для импорта нужна пустая база RootMe.</p>}
+        {genealogy.errors.length > 0 && <ul className="error-box">{genealogy.errors.map(message => <li key={message}>{message}</li>)}</ul>}
+        {genealogy.warnings.length > 0 && <ul>{genealogy.warnings.map(code => <li key={code}>{genealogyWarnings[code] ?? code}</li>)}</ul>}
+        {genealogy.missingGivenNames > 0 && <label className="checkbox">
+          <input type="checkbox" checked={allowUnnamed} disabled={busy} onChange={event => setAllowUnnamed(event.target.checked)} />
+          Использовать подпись «Имя неизвестно» для записей без имени ({genealogy.missingGivenNames})
+        </label>}
+        <button type="button" className="primary" disabled={
+          busy || !genealogy.targetEmpty || genealogy.invalidRecords > 0 || genealogy.persons === 0 ||
+          (genealogy.missingGivenNames > 0 && !allowUnnamed)
+        } onClick={() => {
+          if (!genealogyFile || !window.confirm('Импортировать показанные данные в текущую БД RootMe?')) return
+          void run(async () => {
+            const result = await api.applyGenealogyMdb(genealogyFile, {
+              fingerprint: genealogy.fingerprint,
+              allowUnnamedPersons: allowUnnamed,
+            })
+            onTreeImported(result.rootPersonId)
+          })
+        }}>Импортировать и открыть дерево</button>
+      </div>}
+    </section>
     <section className="backup-section">
       <h3>Импорт персон из Excel или Access</h3>
       <p>Для Excel первая заполненная строка считается заголовком. Импорт добавляет новых персон, а возможные дубликаты пропускает.</p>

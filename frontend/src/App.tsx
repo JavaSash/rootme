@@ -269,7 +269,12 @@ export default function App() {
         onOpenPerson={id => { setSelectedId(id); setEditor(null) }} />}
       {backupsOpen && <BackupDialog onClose={() => setBackupsOpen(false)}
         canRestore={rootResult.data === null} onRestored={reload} />}
-      {transferOpen && <TransferDialog onClose={() => setTransferOpen(false)} onImported={reload} />}
+      {transferOpen && <TransferDialog onClose={() => setTransferOpen(false)} onImported={reload} onTreeImported={id => {
+        chooseRoot(id)
+        setDepth(defaultDepth)
+        setTransferOpen(false)
+        reload()
+      }} />}
     </div>
   )
 }

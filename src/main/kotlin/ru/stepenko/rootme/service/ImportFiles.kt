@@ -26,6 +26,14 @@ internal data class ImportRow(val number: Int, val values: Map<Int, String>)
 
 @Component
 class ImportFiles {
+    internal fun <T> genealogyMdb(file: MultipartFile, read: (com.healthmarketscience.jackcess.Database) -> T): T =
+        readFile(file) { path, extension ->
+            if (extension != "mdb") throw ApiFailure(
+                HttpStatus.UNSUPPORTED_MEDIA_TYPE, "GENEALOGY_MDB_SCHEMA_UNSUPPORTED", "Choose an MDB genealogy database.",
+            )
+            access(path, read)
+        }
+
     fun sources(file: MultipartFile): List<ImportSource> = readFile(file) { path, extension ->
         if (extension in spreadsheets) excel(path) { workbook ->
             (0 until workbook.numberOfSheets).map { sheetIndex ->

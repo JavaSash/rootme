@@ -1,7 +1,7 @@
 import type {
   AlternativeName, AlternativeNameFields, BackupVerification, CreatedBackup, Depth, Partnership, PartnershipFields, Person, PersonDetails,
   PersonFields, PersonPage, PersonPhoto, PhotoFields, RelativeRequest, Tree,
-  ImportMapping, ImportPreview, ImportResult, ImportSource,
+  GenealogyMdbPreview, GenealogyMdbResult, ImportMapping, ImportPreview, ImportResult, ImportSource,
 } from './types'
 
 interface Problem {
@@ -55,6 +55,9 @@ export const api = {
     request<ImportPreview>('/imports/persons/preview', importFile(file, options)),
   applyImport: (file: File, options: ImportMapping & { fingerprint: string }) =>
     request<ImportResult>('/imports/persons/apply', importFile(file, options)),
+  previewGenealogyMdb: (file: File) => request<GenealogyMdbPreview>('/imports/genealogy-mdb/preview', importFile(file)),
+  applyGenealogyMdb: (file: File, options: { fingerprint: string; allowUnnamedPersons: boolean }) =>
+    request<GenealogyMdbResult>('/imports/genealogy-mdb/apply', importFile(file, options)),
   createBackup: () => request<CreatedBackup>('/backups', { method: 'POST' }),
   verifyBackup: (file: File) => request<BackupVerification>('/backups/verify', {
     method: 'POST', headers: { 'Content-Type': 'application/zip' }, body: file,
@@ -124,6 +127,9 @@ export function uploadPhoto(personId: string, file: File, fields: PhotoFields, p
 }
 
 const localizedErrors: Record<string, string> = {
+  GENEALOGY_MDB_SCHEMA_UNSUPPORTED: 'Схема генеалогической базы MDB не поддерживается.',
+  IMPORT_TARGET_NOT_EMPTY: 'Импорт дерева доступен только в пустую базу RootMe.',
+  IMPORT_UNNAMED_PERSONS_CONFIRMATION_REQUIRED: 'Подтвердите подпись «Имя неизвестно» для персон без имени.',
   IMPORT_FORMAT_UNSUPPORTED: 'Выберите XLS, XLSX, MDB или ACCDB.',
   IMPORT_FILE_INVALID: 'Файл повреждён, защищён или имеет неподдерживаемый формат.',
   IMPORT_PREVIEW_CHANGED: 'Файл, сопоставление или список дубликатов изменились. Повторите предпросмотр.',

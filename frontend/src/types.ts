@@ -140,3 +140,21 @@ export interface ImportPreview {
   rows: { row: number; name: string; status: 'READY' | 'DUPLICATE' | 'INVALID'; message?: string }[]
 }
 export interface ImportResult { created: number; skippedDuplicates: number }
+
+export interface GenealogyMdbResult {
+  persons: number
+  parentChildRelationships: number
+  partnerships: number
+  rootPersonId: string
+}
+
+export interface GenealogyMdbPreview extends Omit<GenealogyMdbResult, 'rootPersonId'> {
+  format: string
+  fingerprint: string
+  targetEmpty: boolean
+  missingGivenNames: number
+  invalidRecords: number
+  unresolvedReferences: number
+  errors: string[]
+  warnings: string[]
+}
