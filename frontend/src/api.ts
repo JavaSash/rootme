@@ -1,6 +1,7 @@
 import type {
-  AlternativeName, AlternativeNameFields, Depth, Partnership, PartnershipFields, Person, PersonDetails,
+  AlternativeName, AlternativeNameFields, BackupVerification, CreatedBackup, Depth, Partnership, PartnershipFields, Person, PersonDetails,
   PersonFields, PersonPage, PersonPhoto, PhotoFields, RelativeRequest, Tree,
+  ImportMapping, ImportPreview, ImportResult, ImportSource,
 } from './types'
 
 interface Problem {
@@ -17,14 +18,31 @@ export class ApiError extends Error {
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch('/api/v1' + path, init)
-  if (!response.ok) {
-    const problem = response.headers.get('content-type')?.includes('json')
-      ? await response.json().catch(() => undefined) as Problem | undefined
-      : undefined
-    throw new ApiError(response.status, problem)
-  }
+  if (!response.ok) throw await apiFailure(response)
   if (response.status === 204) return undefined as T
   return response.json()
+}
+
+async function apiFailure(response: Response) {
+  const problem = response.headers.get('content-type')?.includes('json')
+    ? await response.json().catch(() => undefined) as Problem | undefined : undefined
+  return new ApiError(response.status, problem)
+}
+
+function importFile(file: File, options?: object): RequestInit {
+  const data = new FormData()
+  data.append('file', file)
+  if (options) data.append('options', new Blob([JSON.stringify(options)], { type: 'application/json' }))
+  return { method: 'POST', body: data }
+}
+
+export async function exportGedcom() {
+  const response = await fetch('/api/v1/exports/gedcom')
+  if (!response.ok) throw await apiFailure(response)
+  return {
+    file: await response.blob(),
+    warnings: (response.headers.get('X-RootMe-Gedcom-Warnings') ?? '').split(',').filter(Boolean),
+  }
 }
 
 function json(method: 'POST' | 'PATCH' | 'PUT', body: object): RequestInit {
@@ -32,6 +50,20 @@ function json(method: 'POST' | 'PATCH' | 'PUT', body: object): RequestInit {
 }
 
 export const api = {
+  importSources: (file: File) => request<ImportSource[]>('/imports/persons/sources', importFile(file)),
+  previewImport: (file: File, options: ImportMapping) =>
+    request<ImportPreview>('/imports/persons/preview', importFile(file, options)),
+  applyImport: (file: File, options: ImportMapping & { fingerprint: string }) =>
+    request<ImportResult>('/imports/persons/apply', importFile(file, options)),
+  createBackup: () => request<CreatedBackup>('/backups', { method: 'POST' }),
+  verifyBackup: (file: File) => request<BackupVerification>('/backups/verify', {
+    method: 'POST', headers: { 'Content-Type': 'application/zip' }, body: file,
+  }),
+  restoreBackup: (file: File, sha256: string) => request<BackupVerification>('/backups/restore', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/zip', 'X-RootMe-Confirm-Restore': 'true', 'X-RootMe-Backup-SHA256': sha256 },
+    body: file,
+  }),
   people: ({ query = '', birthYear, page = 0, size = 30 }: {
     query?: string; birthYear?: number; page?: number; size?: number
   } = {}, signal?: AbortSignal) => {
@@ -91,7 +123,19 @@ export function uploadPhoto(personId: string, file: File, fields: PhotoFields, p
   })
 }
 
-const photoErrors: Record<string, string> = {
+const localizedErrors: Record<string, string> = {
+  IMPORT_FORMAT_UNSUPPORTED: 'Выберите XLS, XLSX, MDB или ACCDB.',
+  IMPORT_FILE_INVALID: 'Файл повреждён, защищён или имеет неподдерживаемый формат.',
+  IMPORT_PREVIEW_CHANGED: 'Файл, сопоставление или список дубликатов изменились. Повторите предпросмотр.',
+  INVALID_BACKUP: 'Проверка копии не пройдена.',
+  BACKUP_TOO_LARGE: 'Архив или его содержимое превышает допустимый размер.',
+  BACKUP_STORAGE_ERROR: 'Хранилище резервных копий недоступно.',
+  BACKUP_PHOTO_MISSING: 'Копия не создана: отсутствует оригинал одной из фотографий.',
+  BACKUP_PHOTO_MISMATCH: 'Копия не создана: один из оригиналов не совпадает с записанной контрольной суммой.',
+  BACKUP_TARGET_NOT_EMPTY: 'Восстановление доступно только в пустой базе.',
+  BACKUP_PHOTO_CONFLICT: 'В хранилище уже есть папка одной из фотографий архива или ожидается её очистка.',
+  BACKUP_RESTORE_CONFIRMATION_REQUIRED: 'Подтвердите восстановление.',
+  BACKUP_PREVIEW_CHANGED: 'Архив изменился после проверки. Проверьте его снова.',
   PHOTO_TOO_LARGE: 'Файл превышает 20 МиБ.',
   UNSUPPORTED_IMAGE_FORMAT: 'Выберите фотографию в формате JPEG или PNG.',
   INVALID_IMAGE: 'Не удалось прочитать изображение. Возможно, оно повреждено.',
@@ -103,6 +147,6 @@ const photoErrors: Record<string, string> = {
 
 export function errorText(error: unknown): string {
   return error instanceof ApiError
-    ? photoErrors[error.problem.code ?? ''] ?? error.message
+    ? localizedErrors[error.problem.code ?? ''] ?? error.message
     : 'Не удалось связаться с сервером. Проверьте, что RootMe запущен.'
 }

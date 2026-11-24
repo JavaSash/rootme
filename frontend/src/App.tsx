@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ReactFlowProvider } from '@xyflow/react'
 import { ApiError, api, errorText } from './api'
+import { BackupDialog } from './BackupDialog'
+import { TransferDialog } from './TransferDialog'
 import { treeAtDepth } from './branchNavigation'
 import { Editor } from './Editor'
 import type { EditorMode, EditorSubmission } from './Editor'
@@ -22,7 +24,7 @@ function initialRoot() {
 }
 
 function TreeToolbar({
-  root, depth, maxDepth, changeDepth, onSearch, onCreate, busy,
+  root, depth, maxDepth, changeDepth, onSearch, onCreate, onBackup, onTransfer, busy,
 }: {
   root?: PersonSummary
   depth: Depth
@@ -30,6 +32,8 @@ function TreeToolbar({
   changeDepth: (key: keyof Depth, value: number) => void
   onSearch: () => void
   onCreate: () => void
+  onBackup: () => void
+  onTransfer: () => void
   busy: boolean
 }) {
   const depths = maxDepth == null ? [] : Array.from({ length: maxDepth + 1 }, (_, index) => index)
@@ -53,6 +57,8 @@ function TreeToolbar({
           </>
         )}
         <button type="button" className="toolbar-search" onClick={onSearch} disabled={busy}>Справочник персон</button>
+        <button type="button" onClick={onBackup} disabled={busy}>Резервные копии</button>
+        <button type="button" onClick={onTransfer} disabled={busy}>Импорт и экспорт</button>
         <button type="button" className="primary" onClick={onCreate} disabled={busy}>Добавить персону</button>
       </div>
     </header>
@@ -73,6 +79,8 @@ export default function App() {
   const [depth, setDepth] = useState<Depth>(defaultDepth)
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(new Set())
   const [editor, setEditor] = useState<EditorMode | null>(null)
+  const [backupsOpen, setBackupsOpen] = useState(false)
+  const [transferOpen, setTransferOpen] = useState(false)
   const [busy, setBusy] = useState(false)
   const saving = useRef(false)
   const [mutationError, setMutationError] = useState<unknown>()
@@ -194,7 +202,8 @@ export default function App() {
     <div className="app">
       <TreeToolbar root={root} depth={depth} maxDepth={graph.data?.maxDepth}
         changeDepth={(key, value) => setDepth(current => ({ ...current, [key]: value }))}
-        onSearch={() => openEditor({ kind: 'search' })} onCreate={() => openEditor({ kind: 'person' })} busy={busy} />
+        onSearch={() => openEditor({ kind: 'search' })} onCreate={() => openEditor({ kind: 'person' })}
+        onBackup={() => setBackupsOpen(true)} onTransfer={() => setTransferOpen(true)} busy={busy} />
       {mutationError !== undefined && (
         <div className="error-box mutation-error" role="alert">{errorText(mutationError)}
           <button type="button" className="icon-button" aria-label="Закрыть сообщение" onClick={() => setMutationError(undefined)}>×</button>
@@ -258,6 +267,9 @@ export default function App() {
       {editor && <Editor mode={editor} busy={busy} error={formError} onClose={() => setEditor(null)}
         onSubmit={submit} onChooseRoot={chooseRoot}
         onOpenPerson={id => { setSelectedId(id); setEditor(null) }} />}
+      {backupsOpen && <BackupDialog onClose={() => setBackupsOpen(false)}
+        canRestore={rootResult.data === null} onRestored={reload} />}
+      {transferOpen && <TransferDialog onClose={() => setTransferOpen(false)} onImported={reload} />}
     </div>
   )
 }

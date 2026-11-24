@@ -69,6 +69,10 @@ class PersonService(
     @Transactional
     fun create(request: PersonRq) = persons.save(PersonEntity().apply { setFields(request) }).toDto()
 
+    internal fun validateNew(request: PersonRq) {
+        PersonEntity().setFields(request)
+    }
+
     @Transactional
     fun update(id: UUID, patch: JsonNode): PersonDto {
         val person = persons.findForUpdate(id) ?: throw PersonNotFoundException("Person $id was not found.")

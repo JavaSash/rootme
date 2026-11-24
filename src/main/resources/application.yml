@@ -5,6 +5,7 @@ server:
 rootme:
   storage:
     photos-directory: ${ROOTME_STORAGE_PHOTOS_DIRECTORY:data/photos}
+    backups-directory: ${ROOTME_STORAGE_BACKUPS_DIRECTORY:backups}
 
 spring:
   application:

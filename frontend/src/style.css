@@ -233,3 +233,14 @@ dialog .error-box { margin: 0.65rem 0 0; }
 .picker-results .photo-preview { width: 38px; height: 38px; }
 .picker-results .directory-root { width: auto; flex: 0 0 auto; font-size: 0.82rem; }
 .pagination { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-top: 0.65rem; font-size: 0.8rem; }
+.backup-section { display: grid; justify-items: start; gap: 0.65rem; padding: 0.75rem 0; border-top: 1px solid var(--line); }
+.backup-section form { width: 100%; }
+.backup-section a { color: var(--accent); }
+.backup-section dl { margin: 0.4rem 0 0; }
+.backup-section dl div { display: flex; justify-content: space-between; gap: 1.25rem; }
+.backup-section dd { margin: 0; }
+.backup-section > fieldset, .import-preview { min-width: 0; width: 100%; }
+.import-preview { display: grid; gap: 0.6rem; }
+.import-preview table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+.import-preview th, .import-preview td { padding: 0.4rem; text-align: left; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
+.import-preview small { display: block; }

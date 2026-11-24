@@ -114,3 +114,29 @@ export interface Depth {
   ancestors: number
   descendants: number
 }
+
+export interface BackupVerification {
+  version: number
+  createdAt: string
+  counts: Record<string, number>
+  size: number
+  archiveSha256: string
+}
+
+export interface CreatedBackup {
+  id: string
+  downloadUrl: string
+  verification: BackupVerification
+}
+
+export interface ImportSource { name: string; columns: { index: number; label: string }[] }
+export interface ImportMapping { source: string; mapping: Record<string, number> }
+export interface ImportPreview {
+  fingerprint: string
+  ready: number
+  duplicates: number
+  invalid: number
+  total: number
+  rows: { row: number; name: string; status: 'READY' | 'DUPLICATE' | 'INVALID'; message?: string }[]
+}
+export interface ImportResult { created: number; skippedDuplicates: number }

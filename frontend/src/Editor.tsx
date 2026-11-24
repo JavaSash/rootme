@@ -138,7 +138,7 @@ function getPartnershipFields(form: FormData): PartnershipFields {
   }
 }
 
-function Dialog({ title, close, children }: { title: string; close: () => void; children: ReactNode }) {
+export function Dialog({ title, close, children }: { title: string; close: () => void; children: ReactNode }) {
   const dialog = useRef<HTMLDialogElement>(null)
   useEffect(() => {
     const element = dialog.current!

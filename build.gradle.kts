@@ -25,6 +25,8 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-validation")
 	implementation("org.flywaydb:flyway-core")
 	implementation("com.drewnoakes:metadata-extractor:2.19.0")
+	implementation("org.apache.poi:poi-ooxml:5.5.1")
+	implementation("com.healthmarketscience.jackcess:jackcess:5.0.4")
 	runtimeOnly("org.postgresql:postgresql")
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 

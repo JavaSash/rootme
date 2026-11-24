@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component
 import org.springframework.web.multipart.MultipartFile
 import ru.stepenko.rootme.exception.ApiFailure
 import java.io.IOException
+import java.io.InputStream
 import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.LinkOption.NOFOLLOW_LINKS
@@ -51,22 +52,26 @@ class PhotoStorage(
 
     internal fun publish(root: Path, id: UUID, file: MultipartFile): StoredPhoto {
         if (file.size > maxBytes) tooLarge()
+        return file.inputStream.use { publish(root, id, it) }
+    }
+
+    internal fun publish(root: Path, id: UUID, input: InputStream): StoredPhoto {
         val staging = root.resolve("$stagingPrefix$id")
+        val destination = root.resolve(id.toString())
+        if (!Files.notExists(destination, NOFOLLOW_LINKS)) throw java.nio.file.FileAlreadyExistsException(id.toString())
         Files.createDirectory(staging)
         try {
             val raw = staging.resolve("upload.bin")
             val digest = MessageDigest.getInstance("SHA-256")
             var count = 0L
-            file.inputStream.use { input ->
-                DigestOutputStream(Files.newOutputStream(raw), digest).use { output ->
-                    val buffer = ByteArray(16 * 1024)
-                    while (true) {
-                        val read = input.read(buffer)
-                        if (read == -1) break
-                        count += read
-                        if (count > maxBytes) tooLarge()
-                        output.write(buffer, 0, read)
-                    }
+            DigestOutputStream(Files.newOutputStream(raw), digest).use { output ->
+                val buffer = ByteArray(16 * 1024)
+                while (true) {
+                    val read = input.read(buffer)
+                    if (read == -1) break
+                    count += read
+                    if (count > maxBytes) tooLarge()
+                    output.write(buffer, 0, read)
                 }
             }
             val format = images.detect(raw)
@@ -77,7 +82,7 @@ class PhotoStorage(
             listOf(original, thumbnail, marker).forEach { path ->
                 FileChannel.open(path, WRITE).use { it.force(true) }
             }
-            Files.move(staging, root.resolve(id.toString()), ATOMIC_MOVE)
+            Files.move(staging, destination, ATOMIC_MOVE)
             return StoredPhoto(format, dimensions, count, HexFormat.of().formatHex(digest.digest()))
         } finally {
             retryable(id) { deleteDirectory(staging) }
