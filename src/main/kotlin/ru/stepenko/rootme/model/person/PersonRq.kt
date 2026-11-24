@@ -1,22 +1,15 @@
 package ru.stepenko.rootme.model.person
 
-import jakarta.validation.constraints.NotBlank
-import jakarta.validation.constraints.Size
-import java.time.LocalDate
-
 data class PersonRq(
-    @field:NotBlank
-    @field:Size(max = 255)
     val firstName: String,
-    @field:Size(max = 255)
-    val lastName: String?,
-    @field:Size(max = 255)
-    val patronymic: String?,
+    val lastName: String? = null,
+    val patronymic: String? = null,
     val gender: Gender,
-    val relationship: Relationship = Relationship.YOU,
-    val birthDate: LocalDate?,
-    val deathDate: LocalDate?,
-    @field:Size(max = 255) val birthCountry: String?,
-    @field:Size(max = 255) val birthRegion: String?,
-    @field:Size(max = 255) val birthCity: String?,
+    val birthDate: String? = null,
+    val deathDate: String? = null,
+    val birthCountry: String? = null,
+    val birthRegion: String? = null,
+    val birthCity: String? = null,
+    val birthSurname: String? = null,
+    val notes: String? = null,
 )

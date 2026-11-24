@@ -1,32 +1,39 @@
 package ru.stepenko.rootme.controller
 
-import jakarta.validation.Valid
+import com.fasterxml.jackson.databind.JsonNode
+import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.*
-import ru.stepenko.rootme.model.person.PersonDto
+import ru.stepenko.rootme.model.api.RelativeRequest
 import ru.stepenko.rootme.model.person.PersonRq
+import ru.stepenko.rootme.service.FamilyRelationshipService
 import ru.stepenko.rootme.service.PersonService
-import java.util.*
+import java.util.UUID
 
 @RestController
-@RequestMapping("/api/v1/person")
-class PersonApi(private val personService: PersonService) {
-    @PostMapping("/create")
-    fun create(@Valid @RequestBody person: PersonRq): PersonDto
-            = personService.create(person)
+@RequestMapping("/api/v1/persons")
+class PersonApi(
+    private val persons: PersonService,
+    private val relationships: FamilyRelationshipService,
+) {
+    @GetMapping
+    fun list(@RequestParam(defaultValue = "") query: String) = persons.search(query)
 
-    @PutMapping("/edit/{personUuid}")
-    fun update(
-        @PathVariable personUuid: UUID,
-        @Valid @RequestBody person: PersonRq
-    ): PersonDto = personService.update(person, personUuid)
+    @GetMapping("/{id}")
+    fun details(@PathVariable id: UUID) = persons.details(id)
 
-    @GetMapping("/get/{personId}")
-    fun getPerson(@PathVariable personId: UUID): PersonDto = personService.getPerson(personId)
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    fun create(@RequestBody request: PersonRq) = persons.create(request)
 
-    @GetMapping("/get")
-    fun getAllPersons(): List<PersonDto> =
-        personService.getAllPersons()
+    @PatchMapping("/{id}")
+    fun update(@PathVariable id: UUID, @RequestBody patch: JsonNode) = persons.update(id, patch)
 
-    @DeleteMapping("/delete/{personId}")
-    fun delete(@PathVariable personId: UUID) = personService.delete(personId)
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    fun delete(@PathVariable id: UUID) = persons.delete(id)
+
+    @PostMapping("/{id}/relatives")
+    @ResponseStatus(HttpStatus.CREATED)
+    fun addRelative(@PathVariable id: UUID, @RequestBody request: RelativeRequest) =
+        relationships.addRelative(id, request)
 }
