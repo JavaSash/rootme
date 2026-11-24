@@ -1,33 +1,38 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ReactFlowProvider } from '@xyflow/react'
-import { api, errorText } from './api'
+import { ApiError, api, errorText } from './api'
+import { treeAtDepth } from './branchNavigation'
 import { Editor } from './Editor'
 import type { EditorMode, EditorSubmission } from './Editor'
 import FamilyTree from './FamilyTree'
 import { fullName } from './labels'
 import { PersonDetailsPanel } from './PersonDetailsPanel'
-import { branchKey, depthLimit } from './treeLayout'
+import { branchKey } from './treeLayout'
 import type { Branch, Depth, PersonSummary } from './types'
 import { useQuery } from './useQuery'
 
 const rootPreference = 'rootme.rootPersonId'
-const depths = Array.from({ length: depthLimit + 1 }, (_, index) => index)
 const defaultDepth: Depth = { ancestors: 5, descendants: 5 }
 
 function initialRoot() {
-  try { return localStorage.getItem(rootPreference) } catch { return null }
+  try {
+    const id = localStorage.getItem(rootPreference)
+    return id && /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(id) ? id : null
+  } catch { return null }
 }
 
 function TreeToolbar({
-  root, depth, changeDepth, onSearch, onCreate, busy,
+  root, depth, maxDepth, changeDepth, onSearch, onCreate, busy,
 }: {
   root?: PersonSummary
   depth: Depth
+  maxDepth?: number
   changeDepth: (key: keyof Depth, value: number) => void
   onSearch: () => void
   onCreate: () => void
   busy: boolean
 }) {
+  const depths = maxDepth == null ? [] : Array.from({ length: maxDepth + 1 }, (_, index) => index)
   return (
     <header className="toolbar">
       <div className="brand">
@@ -37,15 +42,17 @@ function TreeToolbar({
       <div className="toolbar-controls">
         {root && (
           <>
-            <label>Предки<select value={depth.ancestors} onChange={event => changeDepth('ancestors', +event.target.value)}>
-              {depths.map(value => <option key={value} value={value}>{value}</option>)}
-            </select></label>
-            <label>Потомки<select value={depth.descendants} onChange={event => changeDepth('descendants', +event.target.value)}>
-              {depths.map(value => <option key={value} value={value}>{value}</option>)}
-            </select></label>
-            <button type="button" className="toolbar-search" onClick={onSearch} disabled={busy}>Найти персону</button>
+            {maxDepth != null && <>
+              <label>Предки<select value={depth.ancestors} onChange={event => changeDepth('ancestors', +event.target.value)}>
+                {depths.map(value => <option key={value} value={value}>{value}</option>)}
+              </select></label>
+              <label>Потомки<select value={depth.descendants} onChange={event => changeDepth('descendants', +event.target.value)}>
+                {depths.map(value => <option key={value} value={value}>{value}</option>)}
+              </select></label>
+            </>}
           </>
         )}
+        <button type="button" className="toolbar-search" onClick={onSearch} disabled={busy}>Справочник персон</button>
         <button type="button" className="primary" onClick={onCreate} disabled={busy}>Добавить персону</button>
       </div>
     </header>
@@ -73,9 +80,18 @@ export default function App() {
   const [revision, setRevision] = useState(0)
   const reload = () => setRevision(value => value + 1)
 
-  const loadPeople = useCallback((signal: AbortSignal) => api.people('', signal), [revision])
-  const people = useQuery('people', loadPeople)
-  const root = people.data?.find(person => person.id === preferredRoot) ?? people.data?.[0]
+  const loadRoot = useCallback(async (signal: AbortSignal) => {
+    if (preferredRoot) {
+      try {
+        return (await api.person(preferredRoot, signal)).person
+      } catch (error) {
+        if (!(error instanceof ApiError) || error.status !== 404) throw error
+      }
+    }
+    return (await api.people({ size: 1 }, signal)).items[0] ?? null
+  }, [preferredRoot, revision])
+  const rootResult = useQuery(preferredRoot ?? 'first-person', loadRoot)
+  const root = rootResult.data ?? undefined
   const rootId = root?.id
   const loadTree = useCallback((signal: AbortSignal) => api.tree(rootId!, depth, signal), [rootId, depth, revision])
   const graph = useQuery(rootId ?? null, loadTree)
@@ -83,13 +99,13 @@ export default function App() {
   const details = useQuery(selectedId, loadDetails)
 
   useEffect(() => {
-    if (people.data && !people.loading) {
+    if (rootResult.data !== undefined && !rootResult.loading && rootResult.error === undefined) {
       try {
         if (rootId) localStorage.setItem(rootPreference, rootId)
         else localStorage.removeItem(rootPreference)
       } catch { /* localStorage is optional */ }
     }
-  }, [people.data, people.loading, rootId])
+  }, [rootResult.data, rootResult.loading, rootResult.error, rootId])
 
   function openEditor(mode: EditorMode) {
     setFormError(undefined)
@@ -101,7 +117,6 @@ export default function App() {
     setPreferredRoot(id)
     setSelectedId(id)
     setEditor(null)
-    if (!people.data?.some(person => person.id === id)) reload()
   }
 
   async function mutate(action: () => Promise<void>, fromEditor = false) {
@@ -148,7 +163,7 @@ export default function App() {
       await api.deletePerson(person.id)
       setSelectedId(null)
       if (person.id === rootId) {
-        setPreferredRoot(people.data?.find(other => other.id !== person.id)?.id ?? null)
+        setPreferredRoot(null)
         setCollapsed(new Set())
       }
     })
@@ -167,17 +182,18 @@ export default function App() {
 
   function branchState(branch: Branch) {
     const field = branch === 'parents' ? 'childId' : 'parentId'
-    const depthKey = branch === 'parents' ? 'ancestors' : 'descendants'
     return {
       available: graph.data?.parentChildEdges.some(edge => edge[field] === selectedId) ?? false,
       collapsed: !!selectedId && collapsed.has(branchKey(selectedId, branch)),
-      canExpand: depth[depthKey] < depthLimit,
     }
   }
 
+  const currentTree = treeAtDepth(graph.data, depth)
+
   return (
     <div className="app">
-      <TreeToolbar root={root} depth={depth} changeDepth={(key, value) => setDepth(current => ({ ...current, [key]: value }))}
+      <TreeToolbar root={root} depth={depth} maxDepth={graph.data?.maxDepth}
+        changeDepth={(key, value) => setDepth(current => ({ ...current, [key]: value }))}
         onSearch={() => openEditor({ kind: 'search' })} onCreate={() => openEditor({ kind: 'person' })} busy={busy} />
       {mutationError !== undefined && (
         <div className="error-box mutation-error" role="alert">{errorText(mutationError)}
@@ -193,10 +209,10 @@ export default function App() {
               {graph.loading && graph.data && <span className="muted" role="status">Обновляем…</span>}
             </div>
           )}
-          {people.error !== undefined && <LoadError error={people.error} retry={reload} />}
+          {rootResult.error !== undefined && <LoadError error={rootResult.error} retry={reload} />}
           {graph.error !== undefined && <LoadError error={graph.error} retry={reload} />}
-          {(people.loading && !people.data || graph.loading && !graph.data) && <p className="workspace-status" role="status">Загружаем дерево…</p>}
-          {people.data?.length === 0 && !people.loading && (
+          {(rootResult.loading && rootResult.data === undefined || graph.loading && !graph.data) && <p className="workspace-status" role="status">Загружаем дерево…</p>}
+          {rootResult.data === null && !rootResult.loading && (
             <div className="empty-state">
               <span className="empty-mark" aria-hidden="true">◇</span>
               <h2>Начните семейное дерево</h2>
@@ -211,14 +227,14 @@ export default function App() {
           )}
         </section>
         {selectedId && details.data && (
-          <PersonDetailsPanel details={details.data} rootId={rootId} busy={busy}
-            hidden={graph.data?.hiddenBranches[selectedId]}
+          <PersonDetailsPanel key={selectedId} details={details.data} rootId={rootId} busy={busy} onProfileChange={reload}
+            hidden={currentTree?.hiddenBranches[selectedId]}
             branches={{ parents: branchState('parents'), children: branchState('children') }}
             onClose={() => setSelectedId(null)} onSelect={setSelectedId} onRoot={chooseRoot} onEditor={openEditor}
             onToggleBranch={toggleBranch}
-            onExpandDepth={branch => {
+            onExpandDepth={(branch, nextDepth) => {
               const key = branch === 'parents' ? 'ancestors' : 'descendants'
-              setDepth(current => ({ ...current, [key]: Math.min(depthLimit, current[key] + 1) }))
+              setDepth(current => ({ ...current, [key]: nextDepth }))
             }}
             onDeletePerson={() => removePerson(details.data!.person)}
             onDeleteParentChild={edge => {
@@ -240,7 +256,8 @@ export default function App() {
         )}
       </main>
       {editor && <Editor mode={editor} busy={busy} error={formError} onClose={() => setEditor(null)}
-        onSubmit={submit} onChooseRoot={chooseRoot} />}
+        onSubmit={submit} onChooseRoot={chooseRoot}
+        onOpenPerson={id => { setSelectedId(id); setEditor(null) }} />}
     </div>
   )
 }

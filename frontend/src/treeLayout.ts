@@ -3,9 +3,8 @@ import ElkWorker from 'elkjs/lib/elk-worker.min.js?worker'
 import type { XYPosition } from '@xyflow/react'
 import type { Branch, Tree } from './types'
 
-export const cardWidth = 216
+export const cardWidth = 256
 export const cardHeight = 104
-export const depthLimit = 10
 export const branchKey = (id: string, branch: Branch) => `${id}:${branch}`
 
 export function visibleTree(tree: Tree, collapsed: ReadonlySet<string>): Tree {
@@ -97,6 +96,33 @@ export async function layoutTree(tree: Tree): Promise<Map<string, XYPosition>> {
       incoming.set(next, incoming.get(next)! - 1)
       if (incoming.get(next) === 0) queue.push(next)
     }
+  }
+
+  // Place groups connected only by STEP next to their established generation.
+  // STEP never changes the rank of an ancestry group or the selected root.
+  const anchored = new Set([groupOf.get(tree.rootPersonId)!])
+  for (const [parent, children] of outgoing) {
+    if (children.size > 0) {
+      anchored.add(parent)
+      children.forEach(child => anchored.add(child))
+    }
+  }
+  const stepRanks = new Map<string, Set<number>>()
+  function suggestStepRank(group: string, anchor: string, offset: number) {
+    if (anchored.has(group) || !anchored.has(anchor)) return
+    const suggestions = stepRanks.get(group) ?? new Set<number>()
+    suggestions.add(ranks.get(anchor)! + offset)
+    stepRanks.set(group, suggestions)
+  }
+  for (const edge of tree.parentChildEdges) {
+    if (edge.type !== 'STEP') continue
+    const parent = groupOf.get(edge.parentId)!
+    const child = groupOf.get(edge.childId)!
+    suggestStepRank(parent, child, -1)
+    suggestStepRank(child, parent, 1)
+  }
+  for (const [group, suggestions] of stepRanks) {
+    if (suggestions.size === 1) ranks.set(group, [...suggestions][0])
   }
 
   const rows = new Map<number, string[][]>()

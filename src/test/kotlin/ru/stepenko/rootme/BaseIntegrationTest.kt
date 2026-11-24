@@ -8,6 +8,7 @@ import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.context.TestConstructor
 import org.springframework.test.context.junit.jupiter.SpringExtension
 import ru.stepenko.rootme.repository.PersonRepository
+import ru.stepenko.rootme.service.PhotoCleanup
 
 @SpringBootTest
 @ContextConfiguration(loader = TestContextLoader::class)
@@ -17,8 +18,12 @@ abstract class BaseIntegrationTest {
     @Autowired
     lateinit var personRepository: PersonRepository
 
+    @Autowired
+    lateinit var photoCleanup: PhotoCleanup
+
     @AfterEach
     fun clearUp() {
         personRepository.deleteAll()
+        photoCleanup.retry()
     }
 }

@@ -15,4 +15,10 @@ data class PersonDto(
     val birthCity: String?,
     val birthSurname: String?,
     val notes: String?,
+    val biography: String? = null,
+    val deathCountry: String? = null,
+    val deathRegion: String? = null,
+    val deathCity: String? = null,
+    val occupation: String? = null,
+    val burialPlace: String? = null,
 )

@@ -100,7 +100,9 @@ internal class FamilyRelationshipServiceTest(
         val union = family.addPartnership(request)
         assertTrue(union.person1Id.toString() < union.person2Id.toString())
         val reverse = request.copy(person1Id = b, person2Id = a)
-        assertEquals("DUPLICATE_PARTNERSHIP", assertThrows<Conflict> { family.addPartnership(reverse) }.code)
+        assertEquals("PARTNERSHIP_REPEAT_CONFIRMATION_REQUIRED", assertThrows<Conflict> {
+            family.addPartnership(reverse)
+        }.code)
         val repeated = family.addPartnership(reverse.copy(allowRepeat = true))
         assertNotEquals(union.id, repeated.id)
         val updated = family.updatePartnership(union.id, json.readTree("""{"startDate":null,"endDate":"1950-05"}"""))
@@ -121,7 +123,7 @@ internal class FamilyRelationshipServiceTest(
             partnership = PartnershipFields(PartnershipType.MARRIAGE, PartnershipStatus.ENDED, "1950", "1949"),
         )
         assertThrows<InvalidInput> { family.addRelative(root, request) }
-        assertTrue(persons.search("Relative").isEmpty())
+        assertTrue(persons.search("Relative").items.isEmpty())
         assertTrue(persons.details(root).partnerships.isEmpty())
         val valid = family.addRelative(root, request.copy(partnership = request.partnership!!.copy(endDate = "1950")))
         assertEquals(valid.partnership, persons.details(root).partnerships.single())
@@ -130,7 +132,7 @@ internal class FamilyRelationshipServiceTest(
         val linked = family.addRelative(root, RelativeRequest(RelativeRole.PARENT, existingPersonId = existing, parentChildType = ADOPTIVE))
         assertEquals(existing, linked.parentChild?.parentId)
         assertEquals(root, linked.parentChild?.childId)
-        assertEquals(3, persons.search("").size)
+        assertEquals(3, persons.search("").items.size)
     }
 
     @Test

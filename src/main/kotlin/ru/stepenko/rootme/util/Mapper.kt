@@ -4,6 +4,7 @@ import ru.stepenko.rootme.model.api.ParentChildDto
 import ru.stepenko.rootme.model.api.PartnershipDto
 import ru.stepenko.rootme.model.api.PartnershipFields
 import ru.stepenko.rootme.model.api.PersonSummary
+import ru.stepenko.rootme.model.api.PhotoSummary
 import ru.stepenko.rootme.model.entity.ParentChildRelationship
 import ru.stepenko.rootme.model.entity.Partnership
 import ru.stepenko.rootme.model.entity.PersonEntity
@@ -13,15 +14,18 @@ import ru.stepenko.rootme.model.person.PersonRq
 fun PersonEntity.toDto() = PersonDto(
     requireNotNull(id), firstName, lastName, patronymic, gender, birthDate?.toIso(), deathDate?.toIso(),
     birthCountry, birthRegion, birthCity, birthSurname, notes,
+    biography, deathCountry, deathRegion, deathCity, occupation, burialPlace,
 )
 
 fun PersonEntity.toRequest() = PersonRq(
     firstName, lastName, patronymic, gender, birthDate?.toIso(), deathDate?.toIso(),
     birthCountry, birthRegion, birthCity, birthSurname, notes,
+    biography, deathCountry, deathRegion, deathCity, occupation, burialPlace,
 )
 
-fun PersonEntity.toSummary() = PersonSummary(
+fun PersonEntity.toSummary(primaryPhoto: PhotoSummary? = null) = PersonSummary(
     requireNotNull(id), firstName, lastName, patronymic, gender, birthDate?.toIso(), deathDate?.toIso(),
+    birthSurname, birthCountry, birthRegion, birthCity, primaryPhoto,
 )
 
 fun ParentChildRelationship.toDto() = ParentChildDto(requireNotNull(id), parentId, childId, type, createdAt)

@@ -130,12 +130,13 @@ class FamilyRelationshipService(
             val canConfirmRepeat = fields.status != PartnershipStatus.ACTIVE &&
                 (start?.precision != DatePrecision.DAY || end?.precision != DatePrecision.DAY)
             if (exactMatch && !(canConfirmRepeat && fields.allowRepeat)) {
-                val detail = if (canConfirmRepeat) {
-                    "A matching partnership exists. Confirm allowRepeat for a distinct historical union."
-                } else {
-                    "A matching partnership already exists."
+                if (canConfirmRepeat) {
+                    throw Conflict(
+                        "PARTNERSHIP_REPEAT_CONFIRMATION_REQUIRED",
+                        "A matching partnership exists. Confirm that this is a distinct historical union.",
+                    )
                 }
-                throw Conflict("DUPLICATE_PARTNERSHIP", detail)
+                throw Conflict("DUPLICATE_PARTNERSHIP", "A matching partnership already exists.")
             }
         }
 

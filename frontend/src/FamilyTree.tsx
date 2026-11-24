@@ -7,6 +7,7 @@ import type { Edge, EdgeProps, Node, NodeProps, OnSelectionChangeParams, XYPosit
 import { fullName, genderLabels, lifeYears, parentChildLabels, statusLabels } from './labels'
 import { cardHeight, cardWidth, layoutTree, visibleTree } from './treeLayout'
 import type { HiddenBranches, PersonSummary, Tree } from './types'
+import { PhotoPreview } from './PhotoPreview'
 
 type PersonGraphNode = Node<{
   person: PersonSummary
@@ -26,6 +27,8 @@ function PersonNode({ data, selected }: NodeProps<PersonGraphNode>) {
       <Handle type="target" id="left-in" position={Position.Left} />
       <Handle type="source" id="right-out" position={Position.Right} />
       <Handle type="target" id="right-in" position={Position.Right} />
+      <PhotoPreview src={person.primaryPhoto?.thumbnailUrl} />
+      <div className="node-content">
       <div className="node-meta">
         <span className={`gender-dot gender-${person.gender.toLowerCase()}`} title={genderLabels[person.gender]}>
           <span className="visually-hidden">{genderLabels[person.gender]}</span>
@@ -35,6 +38,7 @@ function PersonNode({ data, selected }: NodeProps<PersonGraphNode>) {
       </div>
       <strong title={fullName(person)}>{fullName(person)}</strong>
       {years && <span className="node-years">{years}</span>}
+      </div>
     </div>
   )
 }
@@ -47,12 +51,16 @@ function RelationshipEdge(props: EdgeProps<RelationshipGraphEdge>) {
     centerY: (sourceY + targetY) / 2 + lane,
   })
   const side = data?.sideways
+  const differentRows = side && Math.abs(sourceY - targetY) >= 2
   const aroundCards = side && Math.abs(sourceY - targetY) < 2 && Math.abs(targetX - sourceX) > 100
   const direction = Math.sign(targetX - sourceX)
   const sameRow = Math.abs(sourceY - targetY) < 2
   const curve = sameRow ? (cardHeight / 2 + 13 + lane) * 4 / 3 : 24 + lane
   const corridor = sourceY + cardHeight / 2 + 18 + lane
-  const path = aroundCards
+  const outside = Math.max(sourceX, targetX) + 26 + lane
+  const path = differentRows
+    ? `M ${sourceX} ${sourceY} H ${outside} V ${targetY} H ${targetX}`
+    : aroundCards
     ? `M ${sourceX} ${sourceY} H ${sourceX + direction * 15} V ${corridor} H ${targetX - direction * 15} V ${targetY} H ${targetX}`
     : side
       ? `M ${sourceX} ${sourceY} C ${sourceX + direction * 34} ${sourceY + curve}, ${targetX - direction * 34} ${targetY + curve}, ${targetX} ${targetY}`
@@ -62,8 +70,9 @@ function RelationshipEdge(props: EdgeProps<RelationshipGraphEdge>) {
       <BaseEdge id={id} path={path} style={style} />
       {label && <EdgeLabelRenderer>
         <span className="relationship-label" style={{
-          left: side ? (sourceX + targetX) / 2 : stepX,
-          top: aroundCards ? corridor : side ? (sourceY + targetY) / 2 + curve * 0.75 : stepY,
+          left: differentRows ? outside : side ? (sourceX + targetX) / 2 : stepX,
+          top: differentRows ? (sourceY + targetY) / 2 + lane
+            : aroundCards ? corridor : side ? (sourceY + targetY) / 2 + curve * 0.75 : stepY,
         }}>{label}</span>
       </EdgeLabelRenderer>}
     </>
@@ -99,14 +108,15 @@ function graphEdges(tree: Tree, positions: Map<string, XYPosition>): Relationshi
     const from = positions.get(source)!
     const to = positions.get(target)!
     const sideways = forceSide || from.y >= to.y
+    const differentRows = sideways && from.y !== to.y
     const key = sideways ? [source, target].sort().join(':') : `${source}:${target}`
     const laneIndex = lanes.get(key) ?? 0
     lanes.set(key, laneIndex + 1)
     const offset = sideways ? laneIndex * 21 : (targetOffsets.get(target) ?? 0) + laneIndex * 14
     return {
       id, source, target, label, type: 'relationship',
-      sourceHandle: sideways ? (from.x <= to.x ? 'right-out' : 'left-out') : 'bottom',
-      targetHandle: sideways ? (from.x <= to.x ? 'left-in' : 'right-in') : 'top',
+      sourceHandle: sideways ? (differentRows || from.x <= to.x ? 'right-out' : 'left-out') : 'bottom',
+      targetHandle: sideways ? (!differentRows && from.x <= to.x ? 'left-in' : 'right-in') : 'top',
       data: { offset, sideways },
       style: { stroke: color, strokeWidth: 2, strokeDasharray: pattern },
     }

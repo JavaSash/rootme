@@ -17,13 +17,41 @@ export interface PersonFields {
   birthCity: string | null
   birthSurname: string | null
   notes: string | null
+  biography: string | null
+  deathCountry: string | null
+  deathRegion: string | null
+  deathCity: string | null
+  occupation: string | null
+  burialPlace: string | null
 }
 
 export interface Person extends PersonFields {
   id: string
 }
 
-export type PersonSummary = Pick<Person, 'id' | 'firstName' | 'lastName' | 'patronymic' | 'gender' | 'birthDate' | 'deathDate'>
+export type PersonSummary = Pick<Person, 'id' | 'firstName' | 'lastName' | 'patronymic' | 'gender' | 'birthDate' | 'deathDate'
+  | 'birthSurname' | 'birthCountry' | 'birthRegion' | 'birthCity'> & { primaryPhoto?: PhotoSummary | null }
+
+export interface PhotoSummary {
+  id: string
+  thumbnailUrl: string
+}
+
+export interface PhotoFields {
+  caption: string | null
+  takenDate: string | null
+}
+
+export interface PersonPhoto extends PhotoSummary, PhotoFields {
+  originalFileName: string
+  originalUrl: string
+  isPrimary: boolean
+}
+
+export type AlternativeNameType = 'FORMER_NAME' | 'NICKNAME' | 'ALTERNATIVE_SPELLING' | 'OTHER'
+export interface AlternativeNameFields { name: string; type: AlternativeNameType }
+export interface AlternativeName extends AlternativeNameFields { id: string }
+export interface PersonPage { items: PersonSummary[]; page: number; size: number; total: number }
 
 export interface ParentChild {
   id: string
@@ -57,6 +85,8 @@ export interface PersonDetails {
   relatives: PersonSummary[]
   parentChildEdges: ParentChild[]
   partnerships: Partnership[]
+  alternativeNames: AlternativeName[]
+  primaryPhoto: PhotoSummary | null
 }
 
 export interface HiddenBranches {
@@ -65,6 +95,8 @@ export interface HiddenBranches {
   stepParents: boolean
   stepChildren: boolean
   partners: boolean
+  nextAncestorDepth: number | null
+  nextDescendantDepth: number | null
 }
 
 export interface Tree {
@@ -73,6 +105,9 @@ export interface Tree {
   parentChildEdges: ParentChild[]
   partnerships: Partnership[]
   hiddenBranches: Record<string, HiddenBranches | undefined>
+  maxDepth: number
+  ancestorDepth: number
+  descendantDepth: number
 }
 
 export interface Depth {

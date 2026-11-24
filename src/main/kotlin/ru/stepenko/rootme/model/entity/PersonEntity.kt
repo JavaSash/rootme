@@ -32,4 +32,10 @@ class PersonEntity(
     var birthCity: String? = null,
     var birthSurname: String? = null,
     var notes: String? = null,
+    var biography: String? = null,
+    var deathCountry: String? = null,
+    var deathRegion: String? = null,
+    var deathCity: String? = null,
+    var occupation: String? = null,
+    var burialPlace: String? = null,
 )

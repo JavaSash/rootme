@@ -31,6 +31,7 @@ interface Props {
   onClose: () => void
   onSubmit: (submission: EditorSubmission) => void
   onChooseRoot: (id: string) => void
+  onOpenPerson: (id: string) => void
 }
 
 const textFields = [
@@ -41,6 +42,11 @@ const textFields = [
   ['birthCountry', 'Страна рождения'],
   ['birthRegion', 'Регион рождения'],
   ['birthCity', 'Город рождения'],
+  ['deathCountry', 'Страна смерти'],
+  ['deathRegion', 'Регион смерти'],
+  ['deathCity', 'Город смерти'],
+  ['occupation', 'Род занятий'],
+  ['burialPlace', 'Место захоронения'],
 ] as const
 
 function DateField({ name, label, value }: { name: string; label: string; value?: string | null }) {
@@ -69,7 +75,7 @@ function PersonInputs({ person }: { person?: Person }) {
       {textFields.slice(4).map(([name, label]) => (
         <label key={name}>{label}<input name={name} maxLength={255} defaultValue={person?.[name] ?? ''} /></label>
       ))}
-      <label className="full-row">Заметки<textarea name="notes" rows={3} defaultValue={person?.notes ?? ''} /></label>
+      <label className="full-row">Заметки<textarea name="notes" rows={3} maxLength={10_000} defaultValue={person?.notes ?? ''} /></label>
     </div>
   )
 }
@@ -113,6 +119,12 @@ function getPersonFields(form: FormData): PersonFields {
     birthCity: nullable(form, 'birthCity'),
     birthSurname: nullable(form, 'birthSurname'),
     notes: String(form.get('notes') ?? '') || null,
+    biography: null,
+    deathCountry: nullable(form, 'deathCountry'),
+    deathRegion: nullable(form, 'deathRegion'),
+    deathCity: nullable(form, 'deathCity'),
+    occupation: nullable(form, 'occupation'),
+    burialPlace: nullable(form, 'burialPlace'),
   }
 }
 
@@ -144,10 +156,10 @@ function Dialog({ title, close, children }: { title: string; close: () => void; 
   )
 }
 
-export function Editor({ mode, busy, error, onClose, onSubmit, onChooseRoot }: Props) {
+export function Editor({ mode, busy, error, onClose, onSubmit, onChooseRoot, onOpenPerson }: Props) {
   const [linkExisting, setLinkExisting] = useState(false)
   const [existing, setExisting] = useState<PersonSummary>()
-  const title = mode.kind === 'search' ? 'Выбрать корень дерева'
+  const title = mode.kind === 'search' ? 'Справочник персон'
     : mode.kind === 'person' ? (mode.person ? 'Редактировать персону' : 'Новая персона')
     : mode.kind === 'partnership' ? 'Редактировать союз'
     : mode.sharedParents ? 'Добавить брата или сестру' : relativeTitles[mode.role]
@@ -161,6 +173,7 @@ export function Editor({ mode, busy, error, onClose, onSubmit, onChooseRoot }: P
       const person = mode.person
       if (person) {
         const changes = Object.fromEntries(Object.entries(fields).filter(([key]) => {
+          if (!form.has(key)) return false
           const previous = person[key as keyof PersonFields] ?? ''
           return previous.replace(/\r\n?/g, '\n') !== String(form.get(key) ?? '')
         }))
@@ -182,12 +195,12 @@ export function Editor({ mode, busy, error, onClose, onSubmit, onChooseRoot }: P
   }
 
   const duplicate = error instanceof ApiError &&
-    error.problem.code === 'DUPLICATE_PARTNERSHIP' &&
-    error.problem.detail?.includes('allowRepeat') === true
+    error.problem.code === 'PARTNERSHIP_REPEAT_CONFIRMATION_REQUIRED'
 
   return (
     <Dialog title={title} close={() => { if (!busy) onClose() }}>
-      {mode.kind === 'search' ? <PersonPicker onSelect={person => onChooseRoot(person.id)} /> : (
+      {mode.kind === 'search' ? <PersonPicker onSelect={person => onOpenPerson(person.id)}
+        onRoot={person => onChooseRoot(person.id)} /> : (
         <form onSubmit={submit}>
           <fieldset disabled={busy}>
             {mode.kind === 'person' && <PersonInputs person={mode.person} />}

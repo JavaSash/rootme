@@ -12,4 +12,10 @@ data class PersonRq(
     val birthCity: String? = null,
     val birthSurname: String? = null,
     val notes: String? = null,
+    val biography: String? = null,
+    val deathCountry: String? = null,
+    val deathRegion: String? = null,
+    val deathCity: String? = null,
+    val occupation: String? = null,
+    val burialPlace: String? = null,
 )

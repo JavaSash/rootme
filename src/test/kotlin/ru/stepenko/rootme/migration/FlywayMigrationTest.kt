@@ -7,13 +7,14 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.jdbc.core.JdbcTemplate
 import ru.stepenko.rootme.BaseIntegrationTest
 import java.time.LocalDate
 import java.util.UUID
 import javax.sql.DataSource
 
-internal class FlywayV2Test(dataSource: DataSource) : BaseIntegrationTest() {
+internal class FlywayMigrationTest(dataSource: DataSource) : BaseIntegrationTest() {
     private val jdbc = JdbcTemplate(dataSource)
     private val schema = "migration_" + UUID.randomUUID().toString().replace("-", "")
     private val configuration = Flyway.configure().dataSource(dataSource)
@@ -64,6 +65,44 @@ internal class FlywayV2Test(dataSource: DataSource) : BaseIntegrationTest() {
         assertEquals(child, edge["child_id"])
         assertEquals(2, jdbc.queryForObject("SELECT count(*) FROM $schema.persons WHERE relationship = 'YOU'", Int::class.java))
         assertNull(jdbc.queryForObject("SELECT to_regclass('$schema.parent_child_relationships')", String::class.java))
+    }
+
+    @Test
+    fun `V3 preserves V2 data and enforces storage constraints in the migrated schema`() {
+        val parent = insertPerson("Parent", LocalDate.of(1950, 5, 1))
+        val child = insertPerson("Child")
+        configuration.target("2").load().migrate()
+        val notes = "research ".repeat(1500)
+        jdbc.update("UPDATE $schema.persons SET notes = ?, birth_date_precision = 'MONTH' WHERE id = ?", notes, parent)
+        val relationship = UUID.randomUUID()
+        jdbc.update("""
+            INSERT INTO $schema.parent_child_relationships (id, parent_id, child_id, type, created_at)
+            VALUES (?, ?, ?, 'ADOPTIVE', now())
+        """, relationship, parent, child)
+
+        configuration.target("3").load().migrate()
+
+        val person = jdbc.queryForMap("SELECT * FROM $schema.persons WHERE id = ?", parent)
+        assertEquals(notes, person["notes"])
+        assertEquals("MONTH", person["birth_date_precision"])
+        assertEquals("1950-05-01", person["birth_date"].toString())
+        assertNull(person["biography"])
+        assertEquals(relationship, jdbc.queryForObject("SELECT id FROM $schema.parent_child_relationships", UUID::class.java))
+
+        val photo = UUID.randomUUID()
+        insertPhoto(photo, parent)
+        assertThrows<DataIntegrityViolationException> { insertPhoto(UUID.randomUUID(), parent) }
+        jdbc.update("DELETE FROM $schema.persons WHERE id = ?", parent)
+        assertEquals(photo, jdbc.queryForObject("SELECT photo_id FROM $schema.photo_file_cleanup", UUID::class.java))
+    }
+
+    private fun insertPhoto(id: UUID, personId: UUID) {
+        jdbc.update("""
+            INSERT INTO $schema.person_photos (
+                id, person_id, original_file_name, storage_key, thumbnail_storage_key,
+                content_type, size_bytes, width, height, sha256, is_primary, created_at
+            ) VALUES (?, ?, 'image.png', ?, ?, 'image/png', 100, 10, 10, repeat('a', 64), true, now())
+        """, id, personId, "$id/original.png", "$id/thumbnail.png")
     }
 
     private fun insertPerson(name: String, birth: LocalDate? = null): UUID {

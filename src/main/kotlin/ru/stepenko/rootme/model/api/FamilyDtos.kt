@@ -17,6 +17,11 @@ data class PersonSummary(
     val gender: Gender,
     val birthDate: String?,
     val deathDate: String?,
+    val birthSurname: String? = null,
+    val birthCountry: String? = null,
+    val birthRegion: String? = null,
+    val birthCity: String? = null,
+    val primaryPhoto: PhotoSummary? = null,
 )
 
 data class ParentChildRequest(val parentId: UUID, val childId: UUID, val type: ParentChildType)
@@ -80,6 +85,8 @@ data class PersonDetailsDto(
     val relatives: List<PersonSummary>,
     val parentChildEdges: List<ParentChildDto>,
     val partnerships: List<PartnershipDto>,
+    val alternativeNames: List<AlternativeNameDto> = emptyList(),
+    val primaryPhoto: PhotoSummary? = null,
 )
 
 data class HiddenBranches(
@@ -88,6 +95,8 @@ data class HiddenBranches(
     val stepParents: Boolean = false,
     val stepChildren: Boolean = false,
     val partners: Boolean = false,
+    val nextAncestorDepth: Int? = null,
+    val nextDescendantDepth: Int? = null,
 )
 
 data class TreeDto(
@@ -96,4 +105,7 @@ data class TreeDto(
     val parentChildEdges: List<ParentChildDto>,
     val partnerships: List<PartnershipDto>,
     val hiddenBranches: Map<UUID, HiddenBranches>,
+    val maxDepth: Int,
+    val ancestorDepth: Int,
+    val descendantDepth: Int,
 )

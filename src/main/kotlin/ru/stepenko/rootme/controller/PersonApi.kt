@@ -16,7 +16,12 @@ class PersonApi(
     private val relationships: FamilyRelationshipService,
 ) {
     @GetMapping
-    fun list(@RequestParam(defaultValue = "") query: String) = persons.search(query)
+    fun list(
+        @RequestParam(defaultValue = "") query: String,
+        @RequestParam birthYear: Int?,
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "30") size: Int,
+    ) = persons.search(query, birthYear, page, size)
 
     @GetMapping("/{id}")
     fun details(@PathVariable id: UUID) = persons.details(id)

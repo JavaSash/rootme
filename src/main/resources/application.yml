@@ -2,9 +2,17 @@ server:
   address: 127.0.0.1
   port: 8080
 
+rootme:
+  storage:
+    photos-directory: ${ROOTME_STORAGE_PHOTOS_DIRECTORY:data/photos}
+
 spring:
   application:
     name: rootme
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 21MB
   datasource:
     url: ${DB_URL:jdbc:postgresql://127.0.0.1:5432/rootme}
     username: rootme

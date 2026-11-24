@@ -43,14 +43,14 @@ internal class PersonServiceTest(private val persons: PersonService, private val
 
     @Test
     fun `list and search match all three name fields case insensitively`() {
-        assertTrue(persons.search("").isEmpty())
+        assertTrue(persons.search("").items.isEmpty())
         val first = persons.create(formPersonRq().copy(patronymic = "Алиевич"))
         val second = persons.create(formPersonRq("Мария", "Северова"))
-        assertEquals(setOf(first.id, second.id), persons.search("").map { it.id }.toSet())
+        assertEquals(setOf(first.id, second.id), persons.search("").items.map { it.id }.toSet())
         for (query in listOf("БРАГ", "ШАСС", "АЛИЕВ")) {
-            assertEquals(listOf(first.id), persons.search(query).map { it.id })
+            assertEquals(listOf(first.id), persons.search(query).items.map { it.id })
         }
-        assertTrue(persons.search("%").isEmpty())
+        assertTrue(persons.search("%").items.isEmpty())
     }
 
     @Test
@@ -60,6 +60,6 @@ internal class PersonServiceTest(private val persons: PersonService, private val
         val kept = persons.create(formPersonRq("Мария"))
         persons.delete(removed.id)
         assertThrows<PersonNotFoundException> { persons.details(removed.id) }
-        assertEquals(listOf(kept.id), persons.search("").map { it.id })
+        assertEquals(listOf(kept.id), persons.search("").items.map { it.id })
     }
 }

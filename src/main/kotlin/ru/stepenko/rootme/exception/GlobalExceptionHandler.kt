@@ -11,6 +11,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
+import org.springframework.web.multipart.MaxUploadSizeExceededException
 
 @RestControllerAdvice
 class GlobalExceptionHandler {
@@ -27,6 +28,13 @@ class GlobalExceptionHandler {
     @ExceptionHandler(Conflict::class)
     fun conflict(error: Conflict) =
         problem(HttpStatus.CONFLICT, error.code, error.message.orEmpty())
+
+    @ExceptionHandler(ApiFailure::class)
+    fun apiFailure(error: ApiFailure) = problem(error.status, error.code, error.message.orEmpty())
+
+    @ExceptionHandler(MaxUploadSizeExceededException::class)
+    fun uploadTooLarge() =
+        problem(HttpStatus.PAYLOAD_TOO_LARGE, "PHOTO_TOO_LARGE", "Use an image of at most 20 MiB.")
 
     @ExceptionHandler(HttpMessageNotReadableException::class, JsonProcessingException::class)
     fun malformedBody(error: Exception): ProblemDetail {
